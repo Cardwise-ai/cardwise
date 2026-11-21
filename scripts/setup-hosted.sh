@@ -382,10 +382,19 @@ say "Production keys are created later, together with the API project."
 open_url "https://aistudio.google.com/apikey"
 step "Create API key -> in a new Google Cloud project named cardwise. Name it cardwise-dev."
 warn "Do not enable billing on that Google Cloud project."
-ask_secret GEMINI_DEV_API_KEY "Paste the Gemini key (hidden):"
+note "In Git Bash, paste with Shift+Insert or right-click; Ctrl+V does nothing. Input stays hidden."
+GEMINI_DEV_API_KEY=""
+until [[ -n "$GEMINI_DEV_API_KEY" ]]; do
+  ask_secret GEMINI_DEV_API_KEY "Paste the Gemini key (hidden):"
+  [[ -n "$GEMINI_DEV_API_KEY" ]] || warn "Nothing was pasted. Try again."
+done
 open_url "https://openrouter.ai/settings/keys"
 step "Create key cardwise-dev with credit limit 0. Don't buy credits."
-ask_secret OPENROUTER_DEV_API_KEY "Paste the OpenRouter key (hidden):"
+OPENROUTER_DEV_API_KEY=""
+until [[ -n "$OPENROUTER_DEV_API_KEY" ]]; do
+  ask_secret OPENROUTER_DEV_API_KEY "Paste the OpenRouter key (hidden):"
+  [[ -n "$OPENROUTER_DEV_API_KEY" ]] || warn "Nothing was pasted. Try again."
+done
 # The local API reads .env; .env.hosted keeps the record of the hosted setup.
 for ENV_FILE in .env.hosted .env; do
   write_env CARDWISE_GEMINI_API_KEY "$GEMINI_DEV_API_KEY"
@@ -403,3 +412,4 @@ note "  dev ref:   $SUPABASE_DEV_REF"
 note "  web URL:   $WEB_PROD_URL"
 note "  scope:     $VERCEL_SCOPE"
 printf '\n'
+pause "Press Enter to close"
