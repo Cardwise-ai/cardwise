@@ -1,4 +1,4 @@
-"""What the message route needs from the agent (D9 implements it).
+"""What the message route needs from the agent (agent.loop.ChatAgent implements it).
 
 The agent answers one user message. It yields text, tool progress and the grounded card list
 as stream events, and finally an AgentUsage. The route owns everything around it: the
@@ -10,8 +10,8 @@ from typing import Protocol
 from uuid import UUID
 
 from cardwise_api.models import MessageOut, Model
+from cardwise_api.retrieval.port import CardBackend
 from cardwise_api.stream_events import CardsEvent, TextEvent, ToolEvent
-from cardwise_core.search import SearchBackend
 from cardwise_llm import ChatModel
 
 
@@ -37,5 +37,5 @@ class Agent(Protocol):
         ...
 
 
-AgentFactory = Callable[[ChatModel, SearchBackend], Agent]
-"""Builds the agent for one request from the configured model and search backend."""
+AgentFactory = Callable[[ChatModel, CardBackend], Agent]
+"""Builds the agent for one request from the configured model and that request's backend."""

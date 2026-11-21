@@ -104,6 +104,11 @@ class CardDetail(Model):
     color_identity: list[Color]
     keywords: list[str]
     legalities: dict[str, Legality]
+    power: str | None = None
+    """Single-faced cards only; cards with faces carry stats on each face."""
+    toughness: str | None = None
+    loyalty: str | None = None
+    defense: str | None = None
     faces: list[CardFace]
     """Empty for single-faced cards."""
     tags: list[TagRef]

@@ -9,12 +9,14 @@ import pytest
 from starlette.requests import ClientDisconnect
 from starlette.types import Message
 
+from cardwise_api.agent.loop import ChatAgent
 from cardwise_api.agent.port import AgentEvent, AgentRequest, AgentUsage
+from cardwise_api.fake_backend import FakeCardBackend, hit
 from cardwise_api.models import CardRef
 from cardwise_api.stream_events import CardsEvent, StartEvent, TextEvent, ToolEvent
 from cardwise_api.streaming import HEARTBEAT, encode_event, sse_body
 from cardwise_api.testing import Harness, ScriptedAgent, make_settings
-from cardwise_llm import ErrorKind, LLMError
+from cardwise_llm import ErrorKind, FakeChatModel, LLMError, ToolCall
 
 HarnessFactory = Callable[..., Harness]
 
@@ -292,3 +294,42 @@ def test_encoded_events_are_single_data_lines() -> None:
     assert frame.endswith(b"\n\n")
     assert frame.count(b"\n") == 2
     assert frame.startswith(b"data: ")
+
+
+def test_the_chat_agent_saves_a_grounded_answer_with_its_cards(
+    new_harness: HarnessFactory,
+) -> None:
+    cultivate = hit("Cultivate", type_line="Sorcery", text="basic land cards")
+    model = FakeChatModel(
+        [
+            FakeChatModel.tool_turn(
+                ToolCall(id="c1", name="search_cards", arguments={"text": "basic land"})
+            ),
+            FakeChatModel.text_turn(
+                f"Try [[{cultivate.oracle_id}|Cultivate]] or [[{uuid4()}|Skyshroud Claim]]."
+            ),
+        ]
+    )
+    harness = new_harness(agent=ChatAgent(model, FakeCardBackend([cultivate])))
+    chat_id = harness.create_chat()
+    events = events_of(send(harness, chat_id))
+
+    assert [e["type"] for e in events] == ["start", "tool", "tool", "text", "cards", "done"]
+    assistant = stored(harness, chat_id)[1]
+    assert assistant.content == f"Try [[{cultivate.oracle_id}|Cultivate]] or Skyshroud Claim."
+    assert [c.name for c in assistant.cards] == ["Cultivate"]
+    assert assistant.status == "complete"
+
+
+def test_the_chat_agent_saves_a_failed_reply_when_every_model_fails(
+    new_harness: HarnessFactory,
+) -> None:
+    down = LLMError(ErrorKind.PROVIDER_DOWN, "all down", model="fake:scripted")
+    model = FakeChatModel([[down]])
+    harness = new_harness(agent=ChatAgent(model, FakeCardBackend()))
+    chat_id = harness.create_chat()
+    events = events_of(send(harness, chat_id))
+
+    assert events[-1]["type"] == "error"
+    assert events[-1]["code"] == "model_unavailable"
+    assert stored(harness, chat_id)[1].status == "failed"

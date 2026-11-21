@@ -20,9 +20,16 @@ from cardwise_api.agent.port import Agent, AgentEvent, AgentRequest, AgentUsage
 from cardwise_api.auth import JwksCache, TokenVerifier
 from cardwise_api.chats.repository import InMemoryChatRepository, InMemoryChatStore
 from cardwise_api.db import Database
-from cardwise_api.dependencies import Services, get_agent, get_chat_repo, get_rate_limiter
+from cardwise_api.dependencies import (
+    Services,
+    get_agent,
+    get_card_backend,
+    get_chat_repo,
+    get_rate_limiter,
+)
 from cardwise_api.main import create_app
 from cardwise_api.ratelimit import InMemoryRateLimiter
+from cardwise_api.retrieval import CardBackend
 from cardwise_api.settings import Settings
 from cardwise_api.stream_events import TextEvent
 
@@ -162,9 +169,11 @@ def make_harness(
     jwks: FakeJwks,
     *,
     agent: Agent | None = None,
+    backend: CardBackend | None = None,
     settings: Settings | None = None,
 ) -> Harness:
-    """`agent=None` leaves the real provider in place, which answers 501 until D9."""
+    """`agent` and `backend` replace the real ones; left out, those routes answer 501, since
+    the harness has no chat model and no database."""
     resolved = settings or make_settings()
     services = Services(settings=resolved, verifier=make_verifier(jwks), database=Database(None))
     app = create_app(services=services)
@@ -178,5 +187,7 @@ def make_harness(
     app.dependency_overrides[get_rate_limiter] = lambda: limiter
     if agent is not None:
         app.dependency_overrides[get_agent] = lambda: agent
+    if backend is not None:
+        app.dependency_overrides[get_card_backend] = lambda: backend
     client = TestClient(app, raise_server_exceptions=False)
     return Harness(app, client, tokens, store, limiter)
