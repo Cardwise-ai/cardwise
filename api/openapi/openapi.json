@@ -638,6 +638,7 @@
   "paths": {
     "/healthz": {
       "get": {
+        "description": "Liveness only: no database or JWKS call, so it stays cheap and always answers.",
         "operationId": "health_healthz_get",
         "responses": {
           "200": {
@@ -848,6 +849,7 @@
     },
     "/v1/chats": {
       "get": {
+        "description": "The caller's chats, most recently active first.",
         "operationId": "list_chats_v1_chats_get",
         "parameters": [
           {
@@ -1040,6 +1042,7 @@
     },
     "/v1/chats/{chat_id}": {
       "delete": {
+        "description": "Deletes the chat with its messages.",
         "operationId": "delete_chat_v1_chats__chat_id__delete",
         "parameters": [
           {
@@ -1114,6 +1117,92 @@
           }
         ],
         "summary": "Delete Chat",
+        "tags": [
+          "chats"
+        ]
+      },
+      "get": {
+        "operationId": "get_chat_v1_chats__chat_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "chat_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Chat Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChatOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Internal Server Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Get Chat",
         "tags": [
           "chats"
         ]
@@ -1217,6 +1306,7 @@
     },
     "/v1/chats/{chat_id}/messages": {
       "get": {
+        "description": "Messages oldest first; `next_cursor` continues forward in time.",
         "operationId": "list_messages_v1_chats__chat_id__messages_get",
         "parameters": [
           {
@@ -1333,6 +1423,7 @@
         ]
       },
       "post": {
+        "description": "Saves the message and streams the answer. Limits: 20 messages an hour, one stream.",
         "operationId": "send_message_v1_chats__chat_id__messages_post",
         "parameters": [
           {
