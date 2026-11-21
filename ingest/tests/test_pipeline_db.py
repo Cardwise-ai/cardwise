@@ -13,10 +13,12 @@ import asyncpg
 import pytest
 from pydantic import SecretStr
 
+from cardwise_ingest import load
 from cardwise_ingest.download import Manifest
 from cardwise_ingest.pipeline import IngestError, Options, run
 from cardwise_ingest.scryfall import BulkType
 from cardwise_ingest.settings import IngestSettings
+from cardwise_ingest.transform import Corpus
 
 pytestmark = pytest.mark.db
 
@@ -54,6 +56,7 @@ async def test_load_activate_noop_and_prune(
     db_settings: IngestSettings,
     tmp_path: Path,
     make_bulk_dir: Callable[..., Manifest],
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     manifest = make_bulk_dir()
     options = Options(tmp_path, from_dir=True, archive=False)
@@ -105,12 +108,22 @@ async def test_load_activate_noop_and_prune(
     second = await run(db_settings, options)
     assert (second.result, second.snapshot_id) == ("unchanged", sid)
 
+    during_load: list[list[str]] = []
+    load_rows = load.load_rows
+
+    async def spy(c: asyncpg.Connection, snapshot_id: int, corpus: Corpus) -> dict[str, int]:
+        during_load.append([s for _, s in await statuses(conn)])
+        return await load_rows(c, snapshot_id, corpus)
+
+    monkeypatch.setattr(load, "load_rows", spy)
     forced = [await run(db_settings, Options(tmp_path, from_dir=True, archive=False, force=True))]
     forced.append(
         await run(db_settings, Options(tmp_path, from_dir=True, archive=False, force=True))
     )
     ids = [o.snapshot_id for o in forced]
     assert await statuses(conn) == [(ids[0], "retired"), (ids[1], "active")]
+    # The retired snapshot is gone before the next one loads (Free plan disk limit).
+    assert during_load == [["active", "loading"], ["active", "loading"]]
 
 
 async def test_failed_validation_keeps_live_snapshot(

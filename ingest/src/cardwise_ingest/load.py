@@ -199,6 +199,24 @@ async def activate(conn: asyncpg.Connection, snapshot_id: int, notes: str | None
             raise LoadError(f"snapshot {snapshot_id} was not in state validated")
 
 
+CORPUS_TABLES = ("cards", "card_faces", "rulings", "tags", "tag_parents", "card_tags", "quarantine")
+
+
+async def make_room(conn: asyncpg.Connection) -> int:
+    """Delete every snapshot but the active one, then vacuum so the next load reuses the space.
+
+    One snapshot is ~180 MB and the Free plan allows 500 MB, so a load must never run next to
+    two older snapshots. The active one stays live until the new one replaces it.
+    """
+    status = await conn.execute("delete from corpus.snapshots where status <> 'active'")
+    deleted = int(status.split()[-1])
+    if deleted:
+        log.info("deleted %d inactive snapshots before loading", deleted)
+        tables = ", ".join(f"corpus.{t}" for t in CORPUS_TABLES)
+        await conn.execute(f"vacuum (analyze) {tables}")
+    return deleted
+
+
 async def prune(conn: asyncpg.Connection) -> int:
     """Keep the active snapshot and the most recent retired one; deletes cascade."""
     status = await conn.execute(

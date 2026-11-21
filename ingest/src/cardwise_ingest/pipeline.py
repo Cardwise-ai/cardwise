@@ -119,6 +119,8 @@ async def _load(
     if store is None:
         log.info("raw files not archived (storage not configured or --no-archive)")
 
+    if report.ok:
+        await load.make_room(conn)
     snapshot_id = await load.create_snapshot(conn, manifest, storage_path, corpus.quarantine)
     if not report.ok:
         reason = "validation failed: " + "; ".join(report.errors)
