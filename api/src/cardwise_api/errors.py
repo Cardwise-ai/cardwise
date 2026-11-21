@@ -1,16 +1,21 @@
 """Request IDs and the single error shape. Responses never include stack traces or internals."""
 
+import logging
 import uuid
 from typing import Final, cast
 
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
+from starlette.exceptions import HTTPException
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
 from cardwise_api.models import ErrorBody, ErrorCode, ErrorDetail
+from cardwise_api.observability import request_id_var
 
 REQUEST_ID_HEADER: Final = "x-request-id"
+
+log: Final = logging.getLogger("cardwise_api.errors")
 
 _STATUS_CODES: Final[dict[int, ErrorCode]] = {
     400: "bad_request",
@@ -48,6 +53,7 @@ class RequestIdMiddleware:
             return
         request_id = uuid.uuid4().hex
         scope.setdefault("state", {})["request_id"] = request_id
+        token = request_id_var.set(request_id)
 
         async def send_with_id(message: Message) -> None:
             if message["type"] == "http.response.start":
@@ -56,7 +62,10 @@ class RequestIdMiddleware:
                 message["headers"] = headers
             await send(message)
 
-        await self.app(scope, receive, send_with_id)
+        try:
+            await self.app(scope, receive, send_with_id)
+        finally:
+            request_id_var.reset(token)
 
 
 def request_id(request: Request) -> str:
@@ -94,11 +103,18 @@ async def _validation_error(request: Request, exc: Exception) -> JSONResponse:
 
 
 async def _unhandled_error(request: Request, exc: Exception) -> JSONResponse:
-    return error_response(request, 500, "internal")
+    # Runs in Starlette's outermost middleware, past the request-ID wrapper, so the ID
+    # header is added here. The log keeps the exception type only (see observability).
+    log.error(
+        "unhandled error", exc_info=exc, extra={"fields": {"request_id": request_id(request)}}
+    )
+    response = error_response(request, 500, "internal")
+    response.headers[REQUEST_ID_HEADER] = request_id(request)
+    return response
 
 
 def install_error_handling(app: FastAPI) -> None:
-    app.add_middleware(RequestIdMiddleware)
+    """Exception handlers only; main.create_app adds RequestIdMiddleware in its place."""
     app.add_exception_handler(HTTPException, _http_error)
     app.add_exception_handler(RequestValidationError, _validation_error)
     app.add_exception_handler(Exception, _unhandled_error)

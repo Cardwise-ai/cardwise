@@ -145,24 +145,36 @@ Password reset and email change by the user need email, so they wait for SMTP (a
 
    The publishable key is under Supabase → Project Settings → API Keys (`sb_publishable_...`). It is public by design. The secret key (`sb_secret_...`, formerly `service_role`) is never used anywhere.
 
-## 8. Vercel: API project (when Line C has endpoints)
+## 8. Vercel: API project
 
-Not needed yet, because the API is still stubs. When it's time:
+The API is ready to deploy (chats, streaming, auth and rate limits; card endpoints and the agent answer 501 until D5/D9). Nothing below has been run yet; the first deploy proves the uv workspace packaging.
 
-1. vercel.com/new → import `cardwise` again → project name `cardwise-api`, framework **FastAPI**, root directory `api`.
-2. Project Settings → Build and Deployment → Root Directory → **Include files outside the root directory: On**. The API imports `packages/core` and `packages/llm`. Packaging the uv workspace on Vercel is untested, so the first API deploy task proves it.
-3. Function region **iad1**; Deployment Protection as above.
-4. Environment variables, all **sensitive**:
+What's in the repo:
+- `api/index.py` re-exports `cardwise_api.main:app`; `[tool.vercel] entrypoint = "index:app"` in `api/pyproject.toml` points Vercel at it.
+- `api/vercel.json` pins the region to `iad1`, lets the function run 300 s (a long answer stream) and leaves tests out of the bundle.
+
+Steps:
+
+1. Check the token signing keys on **both** Supabase projects: Project Settings → **JWT Keys**. The current key must be asymmetric (ECC P-256 or RSA). If it still says "Legacy JWT secret", click **Migrate JWT secret**, then **Rotate keys** so the new ECC key signs tokens. The API only accepts ES256/RS256 tokens checked against `<project URL>/auth/v1/.well-known/jwks.json`; it never sees a JWT secret.
+2. vercel.com/new → import `cardwise` again → project name `cardwise-api`, framework **FastAPI**, root directory `api`.
+3. Project Settings → Build and Deployment → Root Directory → **Include files outside the root directory: On**. The API imports `packages/core` and `packages/llm` from the uv workspace.
+4. Deployment Protection as for the web project. Function region is set by `vercel.json`.
+5. Environment variables, all **sensitive**:
 
    | Name | Production | Preview |
    |---|---|---|
    | `CARDWISE_DATABASE_URL` | prod **Transaction pooler** URL (port 6543) | dev Transaction pooler URL |
    | `CARDWISE_SUPABASE_URL` | `https://<prod-ref>.supabase.co` | `https://<dev-ref>.supabase.co` |
-   | `CARDWISE_WEB_ORIGIN` | web production URL | web preview URL pattern |
+   | `CARDWISE_WEB_ORIGIN` | web production URL, e.g. `https://cardwise-web.vercel.app` (comma-separate several) | web preview branch URL(s), or leave unset and use the regex below |
+   | `CARDWISE_WEB_ORIGIN_REGEX` | unset | `^https://cardwise-web-[a-z0-9-]+-<team-slug>\.vercel\.app$` |
    | `CARDWISE_GEMINI_API_KEY` | prod key | dev key |
    | `CARDWISE_OPENROUTER_API_KEY` | prod key | dev key |
 
-   The pooler URL is under Supabase → **Connect** → Transaction pooler; put the database password into it. The API verifies tokens with the project's public keys at `<project URL>/auth/v1/.well-known/jwks.json`, so no JWT secret is needed.
+   The pooler URL is under Supabase → **Connect** → Transaction pooler; put the database password into it. Use port **6543**: the API opens one connection per request and never prepares named statements, which is what the transaction pooler needs (ADR 0007). `VERCEL_ENV` tells the app it is deployed: it then refuses to start without `CARDWISE_DATABASE_URL` and an https `CARDWISE_SUPABASE_URL`, sends HSTS and hides `/openapi.json`. Optional tuning: `CARDWISE_LOG_LEVEL`, `CARDWISE_MESSAGES_PER_HOUR` (default 20), `CARDWISE_CONCURRENT_STREAMS` (default 1).
+6. Deploy, then check `https://<api-url>/healthz` returns `{"status":"ok"}` and `GET /v1/chats` without a token returns 401 with the JSON error shape.
+7. Set `NEXT_PUBLIC_API_URL` on `cardwise-web` (step 7) to the API URLs.
+
+If the build can't install the workspace packages, fall back to a pinned requirements file: `uv export --package cardwise-api --no-dev --frozen --no-hashes -o api/requirements.txt` plus copying `packages/*/src` into the bundle, and record what worked here.
 
 ## 9. Model providers
 
@@ -211,6 +223,8 @@ An empty answer skips that group. Rotating the database password or an S3 key me
 ## 11. Local `.env`
 
 Copy `.env.example` to `.env` (API) and `apps/web/.env.local` (web). For local work, point them at the local stack: `pnpm exec supabase start` prints the URLs and the local publishable key. Model keys stay empty to use the fake model, or hold the dev keys.
+
+The API only accepts asymmetric (ES256/RS256) tokens. If the local stack still signs with the legacy HS256 secret, generate a key with `pnpm exec supabase gen signing-key --algorithm ES256` (it writes `supabase/signing_keys.json`; never commit it), set `signing_keys_path = "./signing_keys.json"` under `[auth]` in `supabase/config.toml` locally, and restart the stack. Run the API with `uv run --with uvicorn uvicorn cardwise_api.main:app --reload --port 8000`.
 
 ## Values to send back
 
