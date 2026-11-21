@@ -31,7 +31,10 @@ export interface paths {
       path?: never;
       cookie?: never;
     };
-    /** Search Cards */
+    /**
+     * Search Cards
+     * @description Cards matching words in their name, type line or rules text, best match first.
+     */
     get: operations["search_cards_v1_cards_search_get"];
     put?: never;
     post?: never;
@@ -48,7 +51,10 @@ export interface paths {
       path?: never;
       cookie?: never;
     };
-    /** Get Card */
+    /**
+     * Get Card
+     * @description Card panel data from the current corpus snapshot.
+     */
     get: operations["get_card_v1_cards__oracle_id__get"];
     put?: never;
     post?: never;
@@ -133,6 +139,8 @@ export interface components {
     CardDetail: {
       /** Color Identity */
       color_identity: components["schemas"]["Color"][];
+      /** Defense */
+      defense?: string | null;
       /** Faces */
       faces: components["schemas"]["CardFace"][];
       /** Image Uri */
@@ -145,6 +153,8 @@ export interface components {
       legalities: {
         [key: string]: "legal" | "not_legal" | "banned" | "restricted";
       };
+      /** Loyalty */
+      loyalty?: string | null;
       /** Mana Cost */
       mana_cost: string;
       /** Mana Value */
@@ -158,12 +168,16 @@ export interface components {
       oracle_id: string;
       /** Oracle Text */
       oracle_text: string;
+      /** Power */
+      power?: string | null;
       /** Rulings */
       rulings: components["schemas"]["Ruling"][];
       /** Scryfall Uri */
       scryfall_uri: string;
       /** Tags */
       tags: components["schemas"]["TagRef"][];
+      /** Toughness */
+      toughness?: string | null;
       /** Type Line */
       type_line: string;
     };
