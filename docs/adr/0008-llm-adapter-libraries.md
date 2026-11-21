@@ -1,4 +1,4 @@
-# 0007: PydanticAI direct requests for Gemini and OpenRouter, openai SDK for other endpoints
+# 0008: PydanticAI direct requests for Gemini and OpenRouter, openai SDK for other endpoints
 
 Status: accepted
 Date: 2026-11-22
