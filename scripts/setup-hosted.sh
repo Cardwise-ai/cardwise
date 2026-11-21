@@ -190,7 +190,8 @@ finish() {
 # ──────────────────────────────────────────────────────────────────────────
 
 # Hosted setup for Cardwise: Supabase prod + dev, sign-in, Vercel web project,
-# and free model keys. Values are recorded in .env.hosted (git-ignored).
+# and free model keys. Values are recorded in .env.hosted (git-ignored); the dev
+# model keys also go to .env, and the web variables are set in Vercel via its CLI.
 # Reference: docs/external-services.md. Run from the repo root in Git Bash.
 
 ENV_FILE=".env.hosted"
@@ -220,7 +221,8 @@ step "'Enable automatic RLS' ON. Create the project."
 note "The project ref is the id in the URL: supabase.com/dashboard/project/<ref>"
 ask SUPABASE_PROD_REF "Paste the cardwise-prod project ref:"
 write_env SUPABASE_PROD_REF "$SUPABASE_PROD_REF"
-write_env SUPABASE_PROD_URL "https://${SUPABASE_PROD_REF}.supabase.co"
+SUPABASE_PROD_URL="https://${SUPABASE_PROD_REF}.supabase.co"
+write_env SUPABASE_PROD_URL "$SUPABASE_PROD_URL"
 
 # ── 3 ─────────────────────────────────────────────────────────────────────
 stage "Supabase: development project"
@@ -230,7 +232,8 @@ step "Generate a different database password and save it."
 step "Same security options: expose new tables OFF, automatic RLS ON."
 ask SUPABASE_DEV_REF "Paste the cardwise-dev project ref:"
 write_env SUPABASE_DEV_REF "$SUPABASE_DEV_REF"
-write_env SUPABASE_DEV_URL "https://${SUPABASE_DEV_REF}.supabase.co"
+SUPABASE_DEV_URL="https://${SUPABASE_DEV_REF}.supabase.co"
+write_env SUPABASE_DEV_URL "$SUPABASE_DEV_URL"
 
 # ── 4 ─────────────────────────────────────────────────────────────────────
 stage "Supabase: publishable keys"
@@ -295,18 +298,45 @@ step "Vercel Authentication: Standard Protection. Save."
 pause "Done? Press Enter"
 
 # ── 9 ─────────────────────────────────────────────────────────────────────
+VERCEL=(npx --yes vercel@66)
+WEB_VARS_SET=0
+
+# vercel_env NAME ENVIRONMENTS VALUE sets a cardwise-web variable, overwriting
+# any existing one, so re-runs are safe.
+vercel_env() {
+  if printf '%s' "$3" | "${VERCEL[@]}" env add "$1" --environment "$2" \
+      --project cardwise-web --scope "$VERCEL_SCOPE" --no-sensitive --force --yes >/dev/null 2>&1; then
+    printf '  %s✓ set%s Vercel %s (%s)\n' "$GREEN" "$RESET" "$1" "$2"
+    WEB_VARS_SET=$((WEB_VARS_SET + 1))
+  else
+    SKIPPED+=("Vercel cardwise-web $1 ($2)")
+    warn "couldn't set $1 ($2) through the Vercel CLI"
+  fi
+}
+
 stage "Vercel: web environment variables"
-open_url "https://vercel.com/${VERCEL_SCOPE}/cardwise-web/settings/environment-variables"
-say "Add each variable twice: once for Production, once for Preview + Development."
-printf '\n'
-say "NEXT_PUBLIC_SUPABASE_URL"
-note "  Production:           ${SUPABASE_PROD_URL:-https://${SUPABASE_PROD_REF}.supabase.co}"
-note "  Preview, Development: ${SUPABASE_DEV_URL:-https://${SUPABASE_DEV_REF}.supabase.co}"
-say "NEXT_PUBLIC_SUPABASE_ANON_KEY"
-note "  Production:           ${SUPABASE_PROD_PUBLISHABLE_KEY}"
-note "  Preview, Development: ${SUPABASE_DEV_PUBLISHABLE_KEY}"
+say "The wizard sets these on cardwise-web with the Vercel CLI."
+say "Production points at cardwise-prod; Preview and Development at cardwise-dev."
+if ! "${VERCEL[@]}" whoami >/dev/null 2>&1; then
+  say "Log in to the Vercel CLI first (a browser window opens)."
+  "${VERCEL[@]}" login
+fi
+vercel_env NEXT_PUBLIC_SUPABASE_URL production "$SUPABASE_PROD_URL"
+vercel_env NEXT_PUBLIC_SUPABASE_URL preview,development "$SUPABASE_DEV_URL"
+vercel_env NEXT_PUBLIC_SUPABASE_ANON_KEY production "$SUPABASE_PROD_PUBLISHABLE_KEY"
+vercel_env NEXT_PUBLIC_SUPABASE_ANON_KEY preview,development "$SUPABASE_DEV_PUBLISHABLE_KEY"
 note "NEXT_PUBLIC_API_URL waits until the API project exists."
-pause "Added all four? Press Enter"
+open_url "https://vercel.com/${VERCEL_SCOPE}/cardwise-web/settings/environment-variables"
+if (( WEB_VARS_SET < 4 )); then
+  warn "Add the missing ones on this page by hand:"
+  note "  NEXT_PUBLIC_SUPABASE_URL       Production: $SUPABASE_PROD_URL"
+  note "                                 Preview, Development: $SUPABASE_DEV_URL"
+  note "  NEXT_PUBLIC_SUPABASE_ANON_KEY  Production: $SUPABASE_PROD_PUBLISHABLE_KEY"
+  note "                                 Preview, Development: $SUPABASE_DEV_PUBLISHABLE_KEY"
+fi
+step "Check that both variables are listed for all three environments."
+note "They reach the build on the next deploy; nothing reads them until the chat UI lands."
+pause "Looks right? Press Enter"
 
 # ── 10 ────────────────────────────────────────────────────────────────────
 stage "Supabase: sign-in settings (both projects)"
@@ -345,11 +375,15 @@ open_url "https://aistudio.google.com/apikey"
 step "Create API key -> in a new Google Cloud project named cardwise. Name it cardwise-dev."
 warn "Do not enable billing on that Google Cloud project."
 ask_secret GEMINI_DEV_API_KEY "Paste the Gemini key (hidden):"
-write_env CARDWISE_GEMINI_API_KEY "$GEMINI_DEV_API_KEY"
 open_url "https://openrouter.ai/settings/keys"
 step "Create key cardwise-dev with credit limit 0. Don't buy credits."
 ask_secret OPENROUTER_DEV_API_KEY "Paste the OpenRouter key (hidden):"
-write_env CARDWISE_OPENROUTER_API_KEY "$OPENROUTER_DEV_API_KEY"
+# The local API reads .env; .env.hosted keeps the record of the hosted setup.
+for ENV_FILE in .env.hosted .env; do
+  write_env CARDWISE_GEMINI_API_KEY "$GEMINI_DEV_API_KEY"
+  write_env CARDWISE_OPENROUTER_API_KEY "$OPENROUTER_DEV_API_KEY"
+done
+ENV_FILE=".env.hosted"
 open_url "https://openrouter.ai/settings/privacy"
 step "Allow providers that may train on inputs (needed for most :free models)."
 pause "Done? Press Enter"

@@ -123,7 +123,7 @@ Password reset and email change by the user need email, so they wait for SMTP (a
 4. Project Settings:
    - Functions → Function region: **Washington, D.C. (iad1)**.
    - Deployment Protection → Vercel Authentication: **Standard Protection**, so previews need a Vercel login.
-   - Environment Variables (add them now; the web app reads them from Line E on):
+   - Environment Variables (add them now; the web app reads them from Line E on). The setup script sets the first two with `vercel env add --project cardwise-web --scope <scope> --force`:
 
    | Name | Production | Preview and Development |
    |---|---|---|
@@ -194,4 +194,4 @@ None of these are secret. Paste them in chat or into an issue, and the next task
 - the `cardwise-web` production URL and Vercel scope (team slug)
 - confirmation that the integration applied `20261121120000_init` to prod
 
-The setup script `scripts/setup-hosted.sh` walks through steps 1 to 9 and records the values in `.env.hosted` (git-ignored). Run it from Git Bash: `bash scripts/setup-hosted.sh`.
+The setup script `scripts/setup-hosted.sh` walks through steps 1 to 9. It records the values in `.env.hosted` (git-ignored), writes the dev model keys to `.env` for local runs, and sets the `cardwise-web` environment variables in Vercel through the Vercel CLI (it asks you to log in once). If the CLI step fails, it prints the values to paste on the Environment Variables page instead. Run it from Git Bash: `bash scripts/setup-hosted.sh`.
