@@ -51,8 +51,14 @@ KEYWORDS_SQL: Final = "array(select lower(k) from unnest(c.keywords) k)"
 
 ROLE_MATCHED_TAGS: Final = 8
 """matched_tags kept per similar-by-role hit, most specific (highest IDF) first."""
+ROLE_MAX_CHILDREN: Final = 12
+"""Parent tags with more children are categories, not roles; similar-by-role skips them."""
 TEXT_CANDIDATES: Final = 200
 """similar-by-text reranks this many full-text candidates by lexeme overlap."""
+TEXT_SINGLE_SHARE: Final = 0.05
+"""Summed corpus frequency of the rare source lexemes that alone select text candidates."""
+TEXT_PAIR_SHARE: Final = 0.10
+"""Bound on the summed frequency of lexeme pairs that together select text candidates."""
 LEGAL_STATUSES: Final = ("legal", "restricted")
 
 
@@ -189,22 +195,39 @@ def _similar_by_role(query: SimilarQuery) -> Statement:
     """Shared Tagger tags weighted by IDF, normalized by the source card's total weight.
 
     A card's role set is its direct tags plus their parents, so siblings such as mana-dork
-    and mana-rock meet at mana-producer. Going one level up keeps broad roots out.
+    and mana-rock meet at mana-producer. Going one level up keeps broad roots out, and so
+    does skipping parents with more than ROLE_MAX_CHILDREN children: those are groupings
+    (`cycle`, `card-names`, `removal`) whose thousands of holders cost far more to read
+    than their low IDF adds to the score.
     """
     p = Params()
     source = p.add(query.oracle_id)
     colors = _color_filter(p, query.color_identity_within)
+    limit = p.add(query.limit)
+    # Ranking needs edhrec_rank from corpus.cards, but candidates number in the thousands.
+    # `cutoff` walks candidates best-first only until `limit` eligible cards are found; the
+    # final select then reads cards only for candidates scoring at least that (ties included).
     sql = f"""with {SNAPSHOT_CTE},
 src_direct as (
     select ct.tag_id from corpus.card_tags ct
     where ct.snapshot_id = {SNAPSHOT_ID} and ct.oracle_id = {source}::uuid
 ),
-src_role as (
-    select tag_id from src_direct
+src_tags as (
+    select tag_id, true as direct from src_direct
     union
-    select tp.parent_id from corpus.tag_parents tp
+    select tp.parent_id, false from corpus.tag_parents tp
     join src_direct d on d.tag_id = tp.tag_id
     where tp.snapshot_id = {SNAPSHOT_ID}
+),
+fanout as (
+    select s.tag_id, bool_or(s.direct) as direct,
+        (select count(*) from corpus.tag_parents x
+            where x.snapshot_id = {SNAPSHOT_ID} and x.parent_id = s.tag_id) as children
+    from src_tags s group by s.tag_id
+),
+src_role as (
+    select tag_id, children <= {ROLE_MAX_CHILDREN} as expand from fanout
+    where direct or children <= {ROLE_MAX_CHILDREN}
 ),
 holders as (
     select ct.oracle_id, ct.tag_id from corpus.card_tags ct
@@ -213,72 +236,151 @@ holders as (
     union
     select ct.oracle_id, tp.parent_id from corpus.card_tags ct
     join corpus.tag_parents tp on tp.snapshot_id = ct.snapshot_id and tp.tag_id = ct.tag_id
-    join src_role r on r.tag_id = tp.parent_id
+    join src_role r on r.tag_id = tp.parent_id and r.expand
     where ct.snapshot_id = {SNAPSHOT_ID}
 ),
-game_cards as (
-    select count(*)::float8 as n from corpus.cards
-    where snapshot_id = {SNAPSHOT_ID} and is_game_card
+corpus_size as (
+    select coalesce(card_count, 0)::float8 as n from corpus.snapshots where status = 'active'
 ),
 weights as (
-    select h.tag_id, ln(1 + (select n from game_cards) / count(*)) as idf
+    select h.tag_id, ln(1 + (select n from corpus_size) / count(*)) as idf
     from holders h group by h.tag_id
 ),
 total as (select sum(idf) as w from weights),
-cand as (
+cand as materialized (
     select h.oracle_id,
-        sum(w.idf) as shared,
+        round((sum(w.idf) / nullif((select w from total), 0))::numeric, 4)::float8 as score,
         array_agg(t.slug order by w.idf desc, t.slug) as slugs
     from holders h
     join weights w on w.tag_id = h.tag_id
     join corpus.tags t on t.snapshot_id = {SNAPSHOT_ID} and t.tag_id = h.tag_id
     where h.oracle_id <> {source}::uuid
     group by h.oracle_id
+),
+cutoff as (
+    select s.score
+    from (select oracle_id, score from cand order by score desc offset 0) s
+    join corpus.cards c on c.snapshot_id = {SNAPSHOT_ID} and c.oracle_id = s.oracle_id
+    where c.is_game_card{colors}
+    order by s.score desc
+    limit 1 offset {limit}::bigint - 1
 )
 select {HIT_COLUMNS},
     cand.slugs[1:{ROLE_MATCHED_TAGS}] as matched_tags,
-    round((cand.shared / nullif(total.w, 0))::numeric, 4)::float8 as score
+    cand.score
 from cand
-cross join total
 join corpus.cards c on c.snapshot_id = {SNAPSHOT_ID} and c.oracle_id = cand.oracle_id
-where c.is_game_card{colors}
-order by score desc, c.edhrec_rank nulls last, c.name, c.oracle_id
-limit {p.add(query.limit)}"""  # noqa: S608
+where cand.score >= coalesce((select score from cutoff), 0)
+    and c.is_game_card{colors}
+order by cand.score desc, c.edhrec_rank nulls last, c.name, c.oracle_id
+limit {limit}::bigint"""  # noqa: S608
     return Statement(sql, tuple(p.values))
 
 
 def _similar_by_text(query: SimilarQuery) -> Statement:
-    """Full-text OR over the source's rules-text lexemes, reranked by lexeme Jaccard overlap.
+    """Lexeme overlap with the source's type line and rules text, scored by Jaccard.
 
-    Type line and rules text only: names would make cards similar for sharing a word.
+    Type line and rules text only: names would make cards similar for sharing a word. Rules
+    text repeats the card's own name ("Lightning Bolt deals 3 damage"), so the source's name
+    lexemes never select or rank candidates either.
+
+    OR-ing every source lexeme matches half the corpus (`creature`, `card`, `target`), so
+    candidates are selected by the source's rarer lexemes, using the planner's lexeme
+    frequencies for `search_tsv` (pg_stats); lexemes absent from those stats are rarer than
+    any listed one. A candidate shares one of the rarest lexemes (while their summed frequency
+    stays within TEXT_SINGLE_SHARE) or a pair of the others. A pair matches at most as many
+    cards as its rarer lexeme, so pairs are taken rarest first while that bound sums within
+    TEXT_PAIR_SHARE (the rarest pair is always taken if nothing else is). If that finds fewer
+    than `limit` cards, all lexemes select candidates, as a one-time fallback. Candidates are
+    ranked by all lexemes, and the best are reranked by Jaccard overlap. Without stats every
+    lexeme counts as rare, which is correct but slower.
     """
     p = Params()
     source = p.add(query.oracle_id)
     colors = _color_filter(p, query.color_identity_within)
+    limit = p.add(query.limit)
     lexemes = (
         "tsvector_to_array(to_tsvector('english', concat_ws(' ', c.type_line, c.oracle_text)))"
     )
     sql = f"""with {SNAPSHOT_CTE},
 src as (
-    select {lexemes} as lex
+    select {lexemes} as lex,
+        tsvector_to_array(to_tsvector('english', c.name)) as name_lex
     from corpus.cards c
     where c.snapshot_id = {SNAPSHOT_ID} and c.oracle_id = {source}::uuid
 ),
-q as (
-    select string_agg('''' || l || '''', ' | ')::tsquery as tsq
-    from src, unnest(src.lex) l
-    where l ~ '^\\w+$'
+freq as (
+    select x.lexeme, x.f
+    from pg_catalog.pg_stats s,
+        unnest(s.most_common_elems::text::text[], s.most_common_elem_freqs) as x(lexeme, f)
+    where s.schemaname = 'corpus' and s.tablename = 'cards' and s.attname = 'search_tsv'
 ),
-cand as (
+lex0 as (
+    select l.lexeme, coalesce(max(freq.f), 0)::float8 as f
+    from src
+    cross join unnest(src.lex) as l(lexeme)
+    left join freq on freq.lexeme = l.lexeme
+    where l.lexeme ~ '^\\w+$' and l.lexeme <> all(src.name_lex)
+    group by l.lexeme
+),
+lexf as (
+    select lexeme, f,
+        row_number() over (order by f, lexeme) as rarity,
+        sum(f) over (order by f, lexeme) as cumulative
+    from lex0
+),
+singles as (
+    select lexeme from lexf where cumulative <= {TEXT_SINGLE_SHARE}
+),
+pairs as (
+    select a.lexeme as a, b.lexeme as b,
+        row_number() over (order by a.f, b.f, a.lexeme, b.lexeme) as n,
+        sum(a.f) over (order by a.f, b.f, a.lexeme, b.lexeme) as bound
+    from lexf a
+    join lexf b on a.rarity < b.rarity
+    where a.lexeme not in (select lexeme from singles)
+        and b.lexeme not in (select lexeme from singles)
+),
+narrow_terms as (
+    select '''' || lexeme || '''' as term from singles
+    union all
+    select '''' || a || ''' & ''' || b || '''' from pairs
+    where bound <= {TEXT_PAIR_SHARE} or (n = 1 and not exists (select 1 from singles))
+),
+q as (
+    select coalesce(
+        (select string_agg(term, ' | ') from narrow_terms),
+        (select string_agg('''' || lexeme || '''', ' | ') from lexf)
+    )::tsquery as narrow,
+    (select string_agg('''' || lexeme || '''', ' | ') from lexf)::tsquery as wide
+),
+narrow_cand as (
     select c.oracle_id
     from corpus.cards c
     cross join q
     where c.snapshot_id = {SNAPSHOT_ID}
         and c.is_game_card
         and c.oracle_id <> {source}::uuid
-        and c.search_tsv @@ q.tsq{colors}
-    order by ts_rank(c.search_tsv, q.tsq, 1) desc, c.oracle_id
+        and c.search_tsv @@ q.narrow{colors}
+    order by ts_rank(c.search_tsv, q.wide, 1) desc, c.oracle_id
     limit {TEXT_CANDIDATES}
+),
+wide_cand as (
+    select c.oracle_id
+    from corpus.cards c
+    cross join q
+    where (select count(*) from narrow_cand) < {limit}::bigint
+        and c.snapshot_id = {SNAPSHOT_ID}
+        and c.is_game_card
+        and c.oracle_id <> {source}::uuid
+        and c.search_tsv @@ q.wide{colors}
+    order by ts_rank(c.search_tsv, q.wide, 1) desc, c.oracle_id
+    limit {TEXT_CANDIDATES}
+),
+cand as (
+    select oracle_id from narrow_cand
+    union
+    select oracle_id from wide_cand
 ),
 scored as (
     select cand.oracle_id,
@@ -297,7 +399,7 @@ select {HIT_COLUMNS},
 from scored s
 join corpus.cards c on c.snapshot_id = {SNAPSHOT_ID} and c.oracle_id = s.oracle_id
 order by score desc, c.edhrec_rank nulls last, c.name, c.oracle_id
-limit {p.add(query.limit)}"""  # noqa: S608
+limit {limit}::bigint"""  # noqa: S608
     return Statement(sql, tuple(p.values))
 
 
@@ -321,36 +423,37 @@ where c.snapshot_id = {SNAPSHOT_ID} and c.oracle_id = {p.add(query.oracle_id)}::
         return Statement(sql, tuple(p.values))
 
     name = p.add(query.name)
+    # Trigram matching reads thousands of rows for a common name, so it runs only when no
+    # card or face has the name; `not exists (select 1 from named)` is a one-time filter.
+    # Fuzzy scores stay below every name match, so skipping them never changes the winner.
     sql = f"""with {SNAPSHOT_CTE},
-cand as (
-    select c.oracle_id from corpus.cards c
+named as (
+    select c.oracle_id,
+        case when c.name = {name}::text then {EXACT_NAME_SCORE}
+            else {CASELESS_NAME_SCORE} end::float8 as score
+    from corpus.cards c
     where c.snapshot_id = {SNAPSHOT_ID} and lower(c.name) = lower({name}::text)
-    union
-    select f.oracle_id from corpus.card_faces f
+    union all
+    select f.oracle_id, {FACE_NAME_SCORE}::float8
+    from corpus.card_faces f
     where f.snapshot_id = {SNAPSHOT_ID} and lower(f.name) = lower({name}::text)
-    union
-    select c.oracle_id from corpus.cards c
-    where c.snapshot_id = {SNAPSHOT_ID}
+),
+fuzzy as (
+    select c.oracle_id,
+        ({FUZZY_SCALE} * greatest(
+            extensions.similarity(c.name, {name}::text),
+            0.9 * extensions.word_similarity({name}::text, c.name)
+        ))::float8 as score
+    from corpus.cards c
+    where not exists (select 1 from named)
+        and c.snapshot_id = {SNAPSHOT_ID}
         and (c.name operator(extensions.%) {name}::text
             or {name}::text operator(extensions.<%) c.name)
 ),
 scored as (
-    select cand.oracle_id,
-        case
-            when c.name = {name}::text then {EXACT_NAME_SCORE}
-            when lower(c.name) = lower({name}::text) then {CASELESS_NAME_SCORE}
-            when exists (
-                select 1 from corpus.card_faces f
-                where f.snapshot_id = c.snapshot_id and f.oracle_id = c.oracle_id
-                    and lower(f.name) = lower({name}::text)
-            ) then {FACE_NAME_SCORE}
-            else {FUZZY_SCALE} * greatest(
-                extensions.similarity(c.name, {name}::text),
-                0.9 * extensions.word_similarity({name}::text, c.name)
-            )
-        end::float8 as score
-    from cand
-    join corpus.cards c on c.snapshot_id = {SNAPSHOT_ID} and c.oracle_id = cand.oracle_id
+    select oracle_id, max(score) as score
+    from (select * from named union all select * from fuzzy) m
+    group by oracle_id
 )
 select {HIT_COLUMNS},
     '{{}}'::text[] as matched_tags,

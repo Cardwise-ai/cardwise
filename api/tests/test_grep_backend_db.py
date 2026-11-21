@@ -2,9 +2,10 @@
 
 import json
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 from uuid import UUID
 
+import asyncpg
 import pytest
 
 from cardwise_api.retrieval import GrepSearchBackend
@@ -166,6 +167,27 @@ async def test_similar_by_text(backend: GrepSearchBackend) -> None:
     hits = await backend.similar(SimilarQuery(oracle_id=CULTIVATE, by="text", limit=3))
     assert hits[0].name == INVASION_NAME
     assert "Cultivate" not in names(hits)
+
+
+async def test_similar_by_text_with_lexeme_stats(
+    corpus_db: asyncpg.Connection, backend: GrepSearchBackend
+) -> None:
+    # With planner stats, candidates come from the rarer lexemes only.
+    await corpus_db.execute("analyze corpus.cards")
+    hits = await backend.similar(SimilarQuery(oracle_id=CULTIVATE, by="text", limit=3))
+    assert hits[0].name == INVASION_NAME
+    assert "Cultivate" not in names(hits)
+
+
+@pytest.mark.parametrize("by", ["role", "text"])
+async def test_similar_limit_keeps_the_ranking(
+    backend: GrepSearchBackend, by: Literal["role", "text"]
+) -> None:
+    full = await backend.similar(SimilarQuery(oracle_id=LLANOWAR, by=by, limit=25))
+    assert len(full) > 3
+    for limit in (1, 2, 3):
+        hits = await backend.similar(SimilarQuery(oracle_id=LLANOWAR, by=by, limit=limit))
+        assert names(hits) == names(full[:limit])
 
 
 @pytest.mark.parametrize("seed", SEED_QUERIES, ids=[s["id"] for s in SEED_QUERIES])
