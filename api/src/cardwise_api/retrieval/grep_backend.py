@@ -10,6 +10,7 @@ Query text is built only from fixed fragments in this module. Every user value i
 parameter.
 """
 
+import json
 import re
 from collections.abc import Sequence
 from dataclasses import dataclass, field
@@ -19,7 +20,7 @@ from uuid import UUID
 
 import asyncpg
 
-from cardwise_api.models import Ruling
+from cardwise_api.models import CardDetail, CardFace, Ruling, TagRef
 from cardwise_core.cards import Color
 from cardwise_core.search import CardHit, CardLookup, CardQuery, RulingsLookup, SimilarQuery
 
@@ -94,7 +95,8 @@ def _colors(colors: frozenset[Color]) -> list[str]:
     return [str(c) for c in sorted(colors, key=order.index)]
 
 
-def build_search(query: CardQuery) -> Statement:
+def build_search(query: CardQuery, *, limit: int | None = None) -> Statement:
+    """`limit` overrides `query.limit`, for callers outside the tool contract (the panel)."""
     p = Params()
     ctes = [SNAPSHOT_CTE]
     joins: list[str] = []
@@ -177,7 +179,7 @@ from corpus.cards c
 {" ".join(joins)}
 where {" and ".join(where)}
 order by score desc, c.name, c.oracle_id
-limit {p.add(query.limit)}"""  # noqa: S608
+limit {p.add(query.limit if limit is None else limit)}"""  # noqa: S608
     return Statement(sql, tuple(p.values))
 
 
@@ -465,6 +467,53 @@ limit 1"""  # noqa: S608
     return Statement(sql, tuple(p.values))
 
 
+def build_detail(oracle_id: UUID) -> Statement:
+    """Everything the card panel shows except rulings, in one row; faces and tags as JSON."""
+    p = Params()
+    card = p.add(oracle_id)
+    sql = f"""with {SNAPSHOT_CTE}
+select c.oracle_id,
+    c.name,
+    c.layout,
+    coalesce(c.mana_cost, '') as mana_cost,
+    c.mana_value::float8 as mana_value,
+    c.type_line,
+    coalesce(c.oracle_text, '') as oracle_text,
+    c.color_identity,
+    c.keywords,
+    c.legalities::text as legalities,
+    c.image_uris ->> 'normal' as image_uri,
+    c.scryfall_uri,
+    c.payload ->> 'power' as power,
+    c.payload ->> 'toughness' as toughness,
+    c.payload ->> 'loyalty' as loyalty,
+    c.payload ->> 'defense' as defense,
+    coalesce((
+        select json_agg(json_build_object(
+            'name', f.name,
+            'mana_cost', coalesce(f.mana_cost, ''),
+            'type_line', coalesce(f.type_line, ''),
+            'oracle_text', coalesce(f.oracle_text, ''),
+            'power', f.power,
+            'toughness', f.toughness,
+            'loyalty', f.loyalty,
+            'defense', f.defense,
+            'image_uri', f.image_uris ->> 'normal'
+        ) order by f.face_index)
+        from corpus.card_faces f
+        where f.snapshot_id = c.snapshot_id and f.oracle_id = c.oracle_id
+    ), '[]')::text as faces,
+    coalesce((
+        select json_agg(json_build_object('slug', t.slug, 'label', t.label) order by t.slug)
+        from corpus.card_tags ct
+        join corpus.tags t on t.snapshot_id = ct.snapshot_id and t.tag_id = ct.tag_id
+        where ct.snapshot_id = c.snapshot_id and ct.oracle_id = c.oracle_id
+    ), '[]')::text as tags
+from corpus.cards c
+where c.snapshot_id = {SNAPSHOT_ID} and c.oracle_id = {card}::uuid"""  # noqa: S608
+    return Statement(sql, tuple(p.values))
+
+
 def build_rulings(query: RulingsLookup) -> Statement:
     p = Params()
     sql = f"""with {SNAPSHOT_CTE}
@@ -507,6 +556,11 @@ class GrepSearchBackend:
     async def search(self, query: CardQuery) -> list[CardHit]:
         return [to_hit(r) for r in await self._fetch(build_search(query))]
 
+    async def find(self, text: str, limit: int) -> list[CardHit]:
+        """Free-text search for the card panel, which allows more results than the tool."""
+        statement = build_search(CardQuery(text=text), limit=limit)
+        return [to_hit(r) for r in await self._fetch(statement)]
+
     async def similar(self, query: SimilarQuery) -> list[CardHit]:
         return [to_hit(r) for r in await self._fetch(build_similar(query))]
 
@@ -522,3 +576,35 @@ class GrepSearchBackend:
             Ruling(published_at=r["published_at"], source=r["source"], text=r["comment"])
             for r in rows
         ]
+
+    async def get_detail(self, oracle_id: UUID) -> CardDetail | None:
+        """Card panel data, rulings included. Two statements, run one after the other."""
+        rows = await self._fetch(build_detail(oracle_id))
+        if not rows:
+            return None
+        rulings = await self.get_rulings(RulingsLookup(oracle_id=oracle_id))
+        return to_detail(rows[0], rulings)
+
+
+def to_detail(row: asyncpg.Record, rulings: list[Ruling]) -> CardDetail:
+    return CardDetail(
+        oracle_id=row["oracle_id"],
+        name=row["name"],
+        layout=row["layout"],
+        mana_cost=row["mana_cost"],
+        mana_value=row["mana_value"],
+        type_line=row["type_line"],
+        oracle_text=row["oracle_text"],
+        color_identity=[Color(c) for c in row["color_identity"]],
+        keywords=list(row["keywords"]),
+        legalities=json.loads(row["legalities"]),
+        power=row["power"],
+        toughness=row["toughness"],
+        loyalty=row["loyalty"],
+        defense=row["defense"],
+        faces=[CardFace.model_validate(face) for face in json.loads(row["faces"])],
+        tags=[TagRef.model_validate(tag) for tag in json.loads(row["tags"])],
+        rulings=rulings,
+        image_uri=row["image_uri"],
+        scryfall_uri=row["scryfall_uri"],
+    )

@@ -11,6 +11,17 @@
             "title": "Color Identity",
             "type": "array"
           },
+          "defense": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Defense"
+          },
           "faces": {
             "items": {
               "$ref": "#/components/schemas/CardFace"
@@ -53,6 +64,17 @@
             "title": "Legalities",
             "type": "object"
           },
+          "loyalty": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Loyalty"
+          },
           "mana_cost": {
             "title": "Mana Cost",
             "type": "string"
@@ -74,6 +96,17 @@
             "title": "Oracle Text",
             "type": "string"
           },
+          "power": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Power"
+          },
           "rulings": {
             "items": {
               "$ref": "#/components/schemas/Ruling"
@@ -91,6 +124,17 @@
             },
             "title": "Tags",
             "type": "array"
+          },
+          "toughness": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Toughness"
           },
           "type_line": {
             "title": "Type Line",
@@ -660,6 +704,7 @@
     },
     "/v1/cards/search": {
       "get": {
+        "description": "Cards matching words in their name, type line or rules text, best match first.",
         "operationId": "search_cards_v1_cards_search_get",
         "parameters": [
           {
@@ -761,6 +806,7 @@
     },
     "/v1/cards/{oracle_id}": {
       "get": {
+        "description": "Card panel data from the current corpus snapshot.",
         "operationId": "get_card_v1_cards__oracle_id__get",
         "parameters": [
           {
