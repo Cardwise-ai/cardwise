@@ -20,6 +20,14 @@ test("capture screens", async ({ page }, info) => {
   await expect(page.getByRole("heading", { name: "Sign in" })).toBeVisible();
   await shot(page, "1-sign-in", project);
 
+  await page.evaluate(() => localStorage.setItem("cardwise.theme", "dark"));
+  await page.reload();
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
+  await shot(page, "dark-sign-in", project);
+  await page.emulateMedia({ colorScheme: "light" });
+  await page.getByRole("button", { name: /^Theme: Dark/ }).click();
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
+
   await signIn(page);
   await page.goto("/");
   await expect(
@@ -82,4 +90,22 @@ test("capture screens", async ({ page }, info) => {
 
   await page.goto("/tokens");
   await shot(page, "9-tokens", project);
+
+  await page.goto("/");
+  await page.evaluate(() => localStorage.setItem("cardwise.theme", "dark"));
+  await page.reload();
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
+  await expect(
+    page.getByRole("heading", { name: "What is your deck trying to do?" }),
+  ).toBeVisible();
+  await shot(page, "dark-new-chat", project);
+
+  await page.goto(`/chats/${SEEDED_CHAT_ID}`);
+  await page
+    .getByRole("list", { name: "Cards in this answer" })
+    .getByRole("button", { name: "Show Viscera Seer", exact: true })
+    .first()
+    .click();
+  await expect(page.getByRole("heading", { name: "Viscera Seer", level: 2 })).toBeVisible();
+  await shot(page, "dark-card-panel", project);
 });

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Wordmark } from "@/components/app/wordmark";
+import { ThemeToggle } from "@/components/app/theme-toggle";
 import { safeNextPath } from "@/lib/auth/shared";
 import { isMocking } from "@/lib/env";
 import { SignInForm } from "./sign-in-form";
@@ -22,7 +23,7 @@ export default async function SignInPage({ searchParams }: PageProps<"/sign-in">
     <div className="flex min-h-dvh flex-col lg:grid lg:grid-cols-[minmax(0,1.05fr)_minmax(400px,0.95fr)]">
       <section
         aria-labelledby="welcome-title"
-        className="dark-field flex min-h-[310px] flex-col bg-accent px-6 py-7 text-white sm:px-10 sm:py-9 lg:min-h-dvh lg:px-[clamp(48px,8vw,120px)]"
+        className="dark-field flex min-h-[310px] flex-col bg-rail px-6 py-7 text-white sm:px-10 sm:py-9 lg:min-h-dvh lg:px-[clamp(48px,8vw,120px)]"
       >
         <Wordmark inverse />
         <div className="my-auto max-w-[520px] py-10 lg:py-0">
@@ -59,6 +60,9 @@ export default async function SignInPage({ searchParams }: PageProps<"/sign-in">
       </section>
       <main className="flex flex-1 items-center px-5 py-10 sm:px-8 lg:justify-center lg:px-12">
         <div className="mx-auto w-full max-w-[400px]">
+          <div className="mb-8 flex justify-end">
+            <ThemeToggle />
+          </div>
           <h2 className="font-serif text-3xl font-semibold tracking-[-0.025em]">Sign in</h2>
           <p className="mt-2 text-muted">
             Your Commander questions and saved conversations, together.

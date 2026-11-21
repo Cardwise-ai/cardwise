@@ -21,6 +21,14 @@
   --color-placeholder: #e1e9e1;
   --color-brass: #b18a3c;
   --color-river: #36798a;
+  --color-action-ink: #ffffff;
+  --color-danger-ink: #ffffff;
+  --color-overlay: #10211c;
+  --color-rail: #1d4b40;
+  --color-rail-ink: #fbfaf4;
+  --color-rail-muted: #c8d8ca;
+  --color-rail-rule: #507266;
+  --color-rail-hover: #2a5a4d;
   --color-danger: #9c2f2a;
   --color-danger-strong: #7f2622;
   --color-danger-wash: #f8ecea;
@@ -93,6 +101,71 @@
   --font-serif: var(--font-source-serif), Georgia, "Times New Roman", serif;
 }
 
+:root {
+  color-scheme: light;
+}
+
+/* Night table: deep forest, lifted green-black card stock, and softened brass. */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --color-surface: #15241f;
+  --color-panel: #20322b;
+  --color-ink: #e7ede6;
+  --color-muted: #b5c4b8;
+  --color-rule: #3d5147;
+  --color-rule-strong: #63776b;
+  --color-accent: #91c9a6;
+  --color-accent-strong: #a5d7b5;
+  --color-accent-wash: #294539;
+  --color-hover: #2a3b33;
+  --color-placeholder: #25372f;
+  --color-brass: #c6aa73;
+  --color-river: #8fc5d5;
+  --color-action-ink: #14231d;
+  --color-danger-ink: #2d1716;
+  --color-overlay: #071410;
+  --color-rail: #10221d;
+  --color-rail-ink: #f3f4e9;
+  --color-rail-muted: #bdccc0;
+  --color-rail-rule: #34493f;
+  --color-rail-hover: #1c3229;
+  --color-danger: #f29a8f;
+  --color-danger-strong: #ffc1b8;
+  --color-danger-wash: #4a2c2a;
+  --shadow-float: 0 1px 2px rgb(0 0 0 / 0.24), 0 8px 24px rgb(0 0 0 / 0.42);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    color-scheme: dark;
+    --color-surface: #15241f;
+    --color-panel: #20322b;
+    --color-ink: #e7ede6;
+    --color-muted: #b5c4b8;
+    --color-rule: #3d5147;
+    --color-rule-strong: #63776b;
+    --color-accent: #91c9a6;
+    --color-accent-strong: #a5d7b5;
+    --color-accent-wash: #294539;
+    --color-hover: #2a3b33;
+    --color-placeholder: #25372f;
+    --color-brass: #c6aa73;
+    --color-river: #8fc5d5;
+    --color-action-ink: #14231d;
+    --color-danger-ink: #2d1716;
+    --color-overlay: #071410;
+    --color-rail: #10221d;
+    --color-rail-ink: #f3f4e9;
+    --color-rail-muted: #bdccc0;
+    --color-rail-rule: #34493f;
+    --color-rail-hover: #1c3229;
+    --color-danger: #f29a8f;
+    --color-danger-strong: #ffc1b8;
+    --color-danger-wash: #4a2c2a;
+    --shadow-float: 0 1px 2px rgb(0 0 0 / 0.24), 0 8px 24px rgb(0 0 0 / 0.42);
+  }
+}
+
 @layer base {
   html {
     -webkit-text-size-adjust: 100%;
@@ -115,6 +188,7 @@
 
   ::selection {
     background: var(--color-accent-wash);
+    color: var(--color-ink);
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -131,7 +205,7 @@
 /* Answer text rendered by components/markdown.tsx. */
 @layer components {
   .dark-field :focus-visible {
-    outline-color: var(--color-panel);
+    outline-color: var(--color-rail-ink);
   }
 
   .prose-answer {

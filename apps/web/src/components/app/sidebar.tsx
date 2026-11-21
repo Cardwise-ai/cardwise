@@ -9,6 +9,7 @@ import { groupChats } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ChatActions } from "./chat-actions";
+import { ThemeToggle } from "./theme-toggle";
 import { Wordmark } from "./wordmark";
 import { useChats } from "./chats-context";
 
@@ -29,11 +30,11 @@ function ChatListBody() {
   }
   if (state === "error") {
     return (
-      <div className="px-4 pt-3 text-sm text-white">
+      <div className="px-4 pt-3 text-sm text-rail-ink">
         <p>Couldn&apos;t load your chats.</p>
         <Button
           size="sm"
-          className="mt-2 border-white/30 bg-transparent text-white hover:bg-white/10"
+          className="mt-2 border-rail-rule bg-transparent text-rail-ink hover:bg-rail-hover"
           onClick={reload}
         >
           Try again
@@ -42,14 +43,14 @@ function ChatListBody() {
     );
   }
   if (!chats.length) {
-    return <p className="px-4 pt-3 text-sm text-white/70">Your chats will show up here.</p>;
+    return <p className="px-4 pt-3 text-sm text-rail-muted">Your chats will show up here.</p>;
   }
 
   return (
     <>
       {groupChats(chats).map((group) => (
         <section key={group.label} aria-labelledby={`group-${group.label}`} className="mb-4">
-          <h2 id={`group-${group.label}`} className="px-4 pb-1 text-sm text-white/65">
+          <h2 id={`group-${group.label}`} className="px-4 pb-1 text-sm text-rail-muted">
             {group.label}
           </h2>
           <ul>
@@ -61,15 +62,17 @@ function ChatListBody() {
                   key={chat.id}
                   className={cx(
                     "group relative flex items-center border-l-2",
-                    active ? "border-brass bg-white/10" : "border-transparent hover:bg-white/10",
+                    active
+                      ? "border-brass bg-rail-hover"
+                      : "border-transparent hover:bg-rail-hover",
                   )}
                 >
                   <Link
                     href={href}
                     aria-current={active ? "page" : undefined}
                     className={cx(
-                      "block min-w-0 flex-1 truncate py-1.5 pr-1 pl-3.5 text-white focus-visible:outline-offset-[-2px]",
-                      active ? "font-semibold" : "text-white/85",
+                      "block min-w-0 flex-1 truncate py-1.5 pr-1 pl-3.5 text-rail-ink focus-visible:outline-offset-[-2px]",
+                      active ? "font-semibold" : "text-rail-muted",
                     )}
                   >
                     {chat.title}
@@ -77,7 +80,7 @@ function ChatListBody() {
                   <ChatActions
                     chat={chat}
                     className={cx(
-                      "mr-1.5 text-white/70 hover:bg-white/10 hover:text-white data-[state=open]:bg-white/10 data-[state=open]:text-white md:opacity-0 md:group-focus-within:opacity-100 md:group-hover:opacity-100 md:data-[state=open]:opacity-100",
+                      "mr-1.5 text-rail-muted hover:bg-rail-hover hover:text-rail-ink data-[state=open]:bg-rail-hover data-[state=open]:text-rail-ink md:opacity-0 md:group-focus-within:opacity-100 md:group-hover:opacity-100 md:data-[state=open]:opacity-100",
                       active && "md:opacity-100",
                     )}
                   />
@@ -94,7 +97,7 @@ function ChatListBody() {
 /** Chat list: wordmark, new chat, chats grouped by date, and the account footer. */
 export function Sidebar({ email }: { email: string }) {
   return (
-    <div className="dark-field flex h-full min-h-0 flex-col bg-accent text-white">
+    <div className="dark-field flex h-full min-h-0 flex-col bg-rail text-rail-ink">
       <div className="flex h-14 shrink-0 items-center px-5">
         <Link href="/" className="rounded-control">
           <Wordmark inverse />
@@ -103,7 +106,7 @@ export function Sidebar({ email }: { email: string }) {
       <div className="px-3 pb-5">
         <Button
           asChild
-          className="w-full justify-start border border-white/50 bg-panel text-accent hover:bg-white"
+          className="w-full justify-start border border-rail-rule bg-panel text-accent hover:bg-hover"
         >
           <Link href="/">
             <Plus aria-hidden />
@@ -114,20 +117,23 @@ export function Sidebar({ email }: { email: string }) {
       <nav aria-label="Chats" className="min-h-0 flex-1 overflow-y-auto pb-4">
         <ChatListBody />
       </nav>
-      <div className="flex shrink-0 items-center gap-2 border-t border-white/20 py-3 pr-2 pl-4">
-        <p className="min-w-0 flex-1 truncate text-sm text-white/70" title={email}>
-          {email}
-        </p>
-        <form action={signOut}>
-          <Button
-            type="submit"
-            variant="ghost"
-            size="sm"
-            className="text-white hover:bg-white/10 hover:text-white"
-          >
-            Sign out
-          </Button>
-        </form>
+      <div className="shrink-0 border-t border-rail-rule p-3">
+        <ThemeToggle variant="rail" className="mb-2 w-full justify-start" />
+        <div className="flex items-center gap-2 pl-1">
+          <p className="min-w-0 flex-1 truncate text-sm text-rail-muted" title={email}>
+            {email}
+          </p>
+          <form action={signOut}>
+            <Button
+              type="submit"
+              variant="ghost"
+              size="sm"
+              className="text-rail-ink hover:bg-rail-hover hover:text-rail-ink"
+            >
+              Sign out
+            </Button>
+          </form>
+        </div>
       </div>
     </div>
   );

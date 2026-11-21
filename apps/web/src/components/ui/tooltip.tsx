@@ -21,7 +21,7 @@ export function Tooltip({
         <TooltipPrimitive.Content
           side={side}
           sideOffset={6}
-          className="z-50 rounded-popover bg-ink px-2 py-1 text-sm text-white shadow-float animate-fade-in"
+          className="z-50 rounded-popover bg-rail px-2 py-1 text-sm text-rail-ink shadow-float animate-fade-in"
         >
           {label}
         </TooltipPrimitive.Content>
