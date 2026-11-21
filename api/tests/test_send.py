@@ -1,11 +1,10 @@
 import asyncio
 import json
-from collections.abc import AsyncIterator, Callable
+from collections.abc import AsyncIterator, Callable, Mapping
 from contextlib import suppress
-from typing import Any
+from typing import Any, Protocol
 from uuid import UUID, uuid4
 
-import httpx
 import pytest
 from starlette.requests import ClientDisconnect
 from starlette.types import Message
@@ -20,7 +19,22 @@ from cardwise_llm import ErrorKind, LLMError
 HarnessFactory = Callable[..., Harness]
 
 
-def events_of(response: httpx.Response) -> list[dict[str, Any]]:
+class Response(Protocol):
+    """The part of a TestClient response these tests read (httpx or httpx2)."""
+
+    @property
+    def status_code(self) -> int: ...
+
+    @property
+    def text(self) -> str: ...
+
+    @property
+    def headers(self) -> Mapping[str, str]: ...
+
+    def json(self) -> Any: ...
+
+
+def events_of(response: Response) -> list[dict[str, Any]]:
     return [
         json.loads(line.removeprefix("data: "))
         for line in response.text.split("\n")
@@ -28,8 +42,8 @@ def events_of(response: httpx.Response) -> list[dict[str, Any]]:
     ]
 
 
-def send(harness: Harness, chat_id: UUID, content: str = "Best green ramp?") -> httpx.Response:
-    response: httpx.Response = harness.client.post(
+def send(harness: Harness, chat_id: UUID, content: str = "Best green ramp?") -> Response:
+    response: Response = harness.client.post(
         f"/v1/chats/{chat_id}/messages", json={"content": content}, headers=harness.headers
     )
     return response
