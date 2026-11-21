@@ -124,6 +124,8 @@ function seedChat(
 }
 
 export const SEEDED_CHAT_ID = "6f1c2a9e-3b4d-4e5f-8a7b-1c2d3e4f5a6b";
+/** Opening this chat answers 401, as if the API stopped accepting the session. */
+export const EXPIRED_SESSION_CHAT_ID = "00000000-0000-4000-8000-000000000401";
 
 function seed(): StoredChat[] {
   return [
@@ -178,6 +180,10 @@ export const db = {
   },
   getChat(id: string): StoredChat | undefined {
     return chats.find((chat) => chat.id === id);
+  },
+  getChatSummary(id: string): Chat | undefined {
+    const chat = this.getChat(id);
+    return chat ? summary(chat) : undefined;
   },
   createChat(title: string | null | undefined): Chat {
     const now = new Date().toISOString();

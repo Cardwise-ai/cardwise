@@ -7,6 +7,7 @@ import { useChats } from "@/components/app/chats-context";
 import { ErrorBanner } from "@/components/ui/error-banner";
 import { describeError } from "@/lib/errors";
 import { Composer } from "./composer";
+import { FreeTierNotice } from "./free-tier-notice";
 
 const examples = [
   "What are the best free sacrifice outlets for Meren of Clan Nel Toth?",
@@ -71,7 +72,9 @@ export function NewChat() {
             <ErrorBanner className="mb-2">
               <p>{error}</p>
             </ErrorBanner>
-          ) : null}
+          ) : (
+            <FreeTierNotice className="mb-2" />
+          )}
           <Composer
             value={draft}
             onChange={(value) => {

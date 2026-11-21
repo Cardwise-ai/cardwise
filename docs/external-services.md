@@ -142,6 +142,7 @@ Password reset and email change by the user need email, so they wait for SMTP (a
    | `NEXT_PUBLIC_SUPABASE_URL` | `https://<prod-ref>.supabase.co` | `https://<dev-ref>.supabase.co` |
    | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | prod publishable key | dev publishable key |
    | `NEXT_PUBLIC_API_URL` | `cardwise-api` production URL (after step 8) | `cardwise-api` preview URL, or `http://127.0.0.1:8000` |
+   | `NEXT_PUBLIC_LLM_TIER` | `free` (`paid` hides the free-tier notice) | `free` |
 
    The publishable key is under Supabase → Project Settings → API Keys (`sb_publishable_...`). It is public by design. The secret key (`sb_secret_...`, formerly `service_role`) is never used anywhere.
 

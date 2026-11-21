@@ -133,7 +133,7 @@ export function useChat(
         } else if (error instanceof ApiError && !started) {
           // Refused before any answer: nothing was saved, so give the text back.
           setMessages((current) => current.filter((m) => m.id !== userId && m.id !== assistantId));
-          setSendError({ message: describeError(error), content });
+          setSendError({ message: describeError(error, "send"), content });
         } else {
           updateMessage(assistantId, (m) => ({
             ...m,

@@ -9,7 +9,10 @@ import { useChats } from "@/components/app/chats-context";
 import { Button } from "@/components/ui/button";
 import { ErrorBanner } from "@/components/ui/error-banner";
 import { Skeleton } from "@/components/ui/skeleton";
+import { getApiClient } from "@/lib/api/browser";
+import { getChat } from "@/lib/api/endpoints";
 import { Composer } from "./composer";
+import { FreeTierNotice } from "./free-tier-notice";
 import { MessageItem } from "./message";
 import { useChat } from "./use-chat";
 
@@ -41,6 +44,18 @@ export function ChatView({ chatId }: { chatId: string }) {
   const scroller = useRef<HTMLDivElement>(null);
   const stick = useRef(true);
   const summary = chats.chats.find((c) => c.id === chatId);
+
+  // The list holds the first page only. A chat past it, or opened while the list failed to load,
+  // is fetched on its own so the header has its title and actions.
+  const { state: listState, include } = chats;
+  const fetchedSummary = useRef<string | null>(null);
+  useEffect(() => {
+    if (listState === "loading" || summary || fetchedSummary.current === chatId) return;
+    fetchedSummary.current = chatId;
+    getChat(getApiClient(), chatId).then(include, () => {
+      // The history request reports a missing chat; nothing to add here.
+    });
+  }, [listState, summary, chatId, include]);
 
   const { sendError } = chat;
   const [restored, setRestored] = useState<typeof sendError>(null);
@@ -131,7 +146,9 @@ export function ChatView({ chatId }: { chatId: string }) {
               <ErrorBanner className="mb-2">
                 <p>{sendError.message}</p>
               </ErrorBanner>
-            ) : null}
+            ) : (
+              <FreeTierNotice className="mb-2" />
+            )}
             <Composer
               value={draft}
               onChange={(value) => {

@@ -1,12 +1,21 @@
 import { http, HttpResponse } from "msw";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { MOCK_ACCESS_TOKEN } from "@/lib/auth/shared";
 import { apiUrl } from "@/lib/env";
 import type { StreamEvent } from "@/lib/stream/events";
 import { SEEDED_CHAT_ID } from "@/mocks/db";
 import { server } from "@/mocks/node";
 import { ApiError, createApiClient } from "./client";
-import { createChat, deleteChat, listChats, listMessages, sendMessage } from "./endpoints";
+import {
+  createChat,
+  deleteChat,
+  getCard,
+  getChat,
+  listChats,
+  listMessages,
+  searchCards,
+  sendMessage,
+} from "./endpoints";
 
 const api = (token: string | null = MOCK_ACCESS_TOKEN) =>
   createApiClient({ baseUrl: apiUrl, getAccessToken: async () => token });
@@ -76,6 +85,107 @@ describe("API client", () => {
     const chat = await createChat(api());
     expect(chat.title).toBe("New chat");
     expect(await listMessages(api(), chat.id)).toEqual([]);
+  });
+
+  it("gets one chat, and 404s for one that isn't there", async () => {
+    expect(await getChat(api(), SEEDED_CHAT_ID)).toMatchObject({ id: SEEDED_CHAT_ID });
+    await expect(getChat(api(), "00000000-0000-4000-8000-000000000000")).rejects.toMatchObject({
+      code: "not_found",
+    });
+  });
+
+  it("searches cards by name", async () => {
+    let query: string | null = null;
+    server.use(
+      http.get(`${apiUrl}/v1/cards/search`, ({ request }) => {
+        query = new URL(request.url).searchParams.get("q");
+        return HttpResponse.json({
+          items: [
+            {
+              oracle_id: "8d0aa2e2-8b80-4a46-a7a3-4b84de9f0c5f",
+              name: "Viscera Seer",
+              mana_cost: "{B}",
+              type_line: "Creature — Vampire Wizard",
+              image_uri: null,
+            },
+          ],
+        });
+      }),
+    );
+    const items = await searchCards(api(), "viscera seer");
+    expect(query).toBe("viscera seer");
+    expect(items.map((c) => c.name)).toEqual(["Viscera Seer"]);
+  });
+
+  it("reports a feature the server hasn't switched on as not_implemented", async () => {
+    server.use(
+      http.get(`${apiUrl}/v1/cards/:id`, () =>
+        HttpResponse.json(
+          { error: { code: "not_implemented", message: "Not available yet.", request_id: "r" } },
+          { status: 501 },
+        ),
+      ),
+    );
+    await expect(getCard(api(), SEEDED_CHAT_ID)).rejects.toMatchObject({
+      status: 501,
+      code: "not_implemented",
+    });
+  });
+});
+
+describe("expired sessions", () => {
+  function client(options: { refreshed: string | null }) {
+    const onUnauthorized = vi.fn();
+    const refreshAccessToken = vi.fn(async () => options.refreshed);
+    const instance = createApiClient({
+      baseUrl: apiUrl,
+      getAccessToken: async () => "stale-token",
+      refreshAccessToken,
+      onUnauthorized,
+    });
+    return { instance, onUnauthorized, refreshAccessToken };
+  }
+
+  it("refreshes the token once and repeats the request, body included", async () => {
+    const { instance, onUnauthorized, refreshAccessToken } = client({
+      refreshed: MOCK_ACCESS_TOKEN,
+    });
+    const chat = await createChat(instance, "Ramp for Esika");
+    expect(chat.title).toBe("Ramp for Esika");
+    expect(refreshAccessToken).toHaveBeenCalledOnce();
+    expect(onUnauthorized).not.toHaveBeenCalled();
+  });
+
+  it("ends the session when the refreshed token is refused too", async () => {
+    const { instance, onUnauthorized, refreshAccessToken } = client({ refreshed: "also-bad" });
+    await expect(listChats(instance)).rejects.toMatchObject({ code: "unauthorized" });
+    expect(refreshAccessToken).toHaveBeenCalledOnce();
+    expect(onUnauthorized).toHaveBeenCalledOnce();
+  });
+
+  it("ends the session when there is nothing to refresh", async () => {
+    const { instance, onUnauthorized } = client({ refreshed: null });
+    const error = await collect(sendMessage(instance, SEEDED_CHAT_ID, "Ramp?")).catch(
+      (e: unknown) => e,
+    );
+    expect(error).toMatchObject({ status: 401, code: "unauthorized" });
+    expect(onUnauthorized).toHaveBeenCalledOnce();
+  });
+
+  it("leaves other errors alone", async () => {
+    const onUnauthorized = vi.fn();
+    const refreshAccessToken = vi.fn(async () => MOCK_ACCESS_TOKEN);
+    const instance = createApiClient({
+      baseUrl: apiUrl,
+      getAccessToken: async () => MOCK_ACCESS_TOKEN,
+      refreshAccessToken,
+      onUnauthorized,
+    });
+    await expect(getChat(instance, "00000000-0000-4000-8000-000000000000")).rejects.toMatchObject({
+      code: "not_found",
+    });
+    expect(refreshAccessToken).not.toHaveBeenCalled();
+    expect(onUnauthorized).not.toHaveBeenCalled();
   });
 });
 

@@ -88,4 +88,18 @@ describe("CardPanel", () => {
       await screen.findByRole("heading", { name: "Carrion Feeder", level: 2 }),
     ).toBeInTheDocument();
   });
+
+  it("says when a card isn't in the data, without a pointless retry", async () => {
+    server.use(
+      http.get(`${apiUrl}/v1/cards/:id`, () =>
+        HttpResponse.json(
+          { error: { code: "not_found", message: "Not found.", request_id: "req_2" } },
+          { status: 404 },
+        ),
+      ),
+    );
+    renderPanel("Spawning Pit");
+    expect(await screen.findByText("This card isn't in Cardwise's card data.")).toBeVisible();
+    expect(screen.queryByRole("button", { name: "Try again" })).not.toBeInTheDocument();
+  });
 });

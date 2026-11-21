@@ -25,6 +25,8 @@ interface ChatsContextValue {
   remove: (chatId: string) => Promise<void>;
   /** Moves a chat to the top after a message, and picks up a server-generated title. */
   touch: (chatId: string) => void;
+  /** Adds a chat fetched on its own, such as one past the first page of the list. */
+  include: (chat: Chat) => void;
   /** A message to send as soon as the chat view for this chat mounts. */
   takePendingMessage: (chatId: string) => string | undefined;
   setPendingMessage: (chatId: string, content: string) => void;
@@ -99,6 +101,13 @@ export function ChatsProvider({ children }: { children: ReactNode }) {
           return [updated, ...current.filter((c) => c.id !== chatId)];
         });
         void load("quiet");
+      },
+      include(chat) {
+        setChats((current) =>
+          current.some((c) => c.id === chat.id)
+            ? current
+            : [...current, chat].sort((a, b) => b.updated_at.localeCompare(a.updated_at)),
+        );
       },
       takePendingMessage(chatId) {
         const content = pending.current.get(chatId);

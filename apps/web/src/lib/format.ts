@@ -26,12 +26,18 @@ export function clockTime(date: Date, locale?: string): string {
   return new Intl.DateTimeFormat(locale, { hour: "numeric", minute: "2-digit" }).format(date);
 }
 
+/** The API asks for a retry this soon only when another answer is still streaming. */
+const STREAM_BUSY_MAX_SECONDS = 30;
+
 export function rateLimitMessage(
   retryAfterSeconds: number | null,
   now = new Date(),
   locale?: string,
 ): string {
   if (!retryAfterSeconds) return "Too many messages this hour. Try again later.";
+  if (retryAfterSeconds <= STREAM_BUSY_MAX_SECONDS) {
+    return "Cardwise is still answering another message, maybe in another tab. Try again in a few seconds.";
+  }
   const at = new Date(now.getTime() + retryAfterSeconds * 1000);
   return `Too many messages this hour. Try again at ${clockTime(at, locale)}.`;
 }

@@ -85,4 +85,8 @@ describe("rateLimitMessage", () => {
     );
     expect(rateLimitMessage(null, now)).toBe("Too many messages this hour. Try again later.");
   });
+
+  it("tells a short wait apart from the hourly limit", () => {
+    expect(rateLimitMessage(5)).toMatch(/still answering another message.*few seconds\.$/);
+  });
 });

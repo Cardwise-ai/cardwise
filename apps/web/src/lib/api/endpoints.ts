@@ -4,6 +4,7 @@ import {
   type ApiClient,
   ApiError,
   type CardDetail,
+  type CardSummary,
   type Chat,
   type Message,
   toApiError,
@@ -22,6 +23,10 @@ export async function listChats(
 
 export function createChat(api: ApiClient, title?: string): Promise<Chat> {
   return unwrap(api.POST("/v1/chats", { body: title ? { title } : {} }));
+}
+
+export function getChat(api: ApiClient, chatId: string): Promise<Chat> {
+  return unwrap(api.GET("/v1/chats/{chat_id}", { params: { path: { chat_id: chatId } } }));
 }
 
 export function renameChat(api: ApiClient, chatId: string, title: string): Promise<Chat> {
@@ -54,6 +59,20 @@ export function getCard(
       ...(signal ? { signal } : {}),
     }),
   );
+}
+
+export async function searchCards(
+  api: ApiClient,
+  query: string,
+  signal?: AbortSignal,
+): Promise<CardSummary[]> {
+  const page = await unwrap(
+    api.GET("/v1/cards/search", {
+      params: { query: { q: query } },
+      ...(signal ? { signal } : {}),
+    }),
+  );
+  return page.items;
 }
 
 export interface SendMessageOptions {

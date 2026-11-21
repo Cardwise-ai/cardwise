@@ -53,6 +53,36 @@ test.describe("chat", () => {
     await expect(box).toHaveValue("Does this hit the rate limit?");
   });
 
+  test("says when another answer is still streaming", async ({ page }) => {
+    await page.goto(`/chats/${SEEDED_CHAT_ID}`);
+    await page.getByRole("textbox", { name: "Message" }).fill("Still busy in another tab?");
+    await page.keyboard.press("Enter");
+    await expect(page.getByText(/still answering another message/)).toBeVisible();
+  });
+
+  test("keeps a cut-off answer and offers to try again", async ({ page }) => {
+    await page.goto(`/chats/${SEEDED_CHAT_ID}`);
+    await page
+      .getByRole("textbox", { name: "Message" })
+      .fill("Finishers for Selvala, and drop the connection");
+    await page.keyboard.press("Enter");
+    await expect(
+      page.getByText("The connection dropped before the answer finished. Try again."),
+    ).toBeVisible({ timeout: 20_000 });
+    await expect(page.getByRole("button", { name: "Try again" })).toBeVisible();
+  });
+
+  test("the free-tier notice stays dismissed", async ({ page }) => {
+    const notice = page.getByRole("note", { name: "About free model tiers" });
+    await expect(notice).toContainText("You can send 20 messages an hour.");
+    await notice.getByRole("button", { name: "Dismiss" }).click();
+    await expect(notice).toHaveCount(0);
+    await expect(page.getByRole("textbox", { name: "Message" })).toBeFocused();
+    await page.goto(`/chats/${SEEDED_CHAT_ID}`);
+    await expect(page.getByRole("textbox", { name: "Message" })).toBeVisible();
+    await expect(notice).toHaveCount(0);
+  });
+
   test("renames and deletes a chat", async ({ page, isMobile }) => {
     await page.goto(`/chats/${SEEDED_CHAT_ID}`);
     const header = page.locator("header", { has: page.getByRole("heading", { level: 1 }) });
@@ -88,6 +118,7 @@ test.describe("accessibility", () => {
     await expect(
       page.getByRole("heading", { name: "Ask about cards for your deck" }),
     ).toBeVisible();
+    await expect(page.getByRole("note", { name: "About free model tiers" })).toBeVisible();
     await expectNoAxeViolations(page);
   });
 

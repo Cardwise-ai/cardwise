@@ -20,3 +20,13 @@ export function supabaseConfig(): { url: string; anonKey: string } {
 }
 
 export const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+
+/**
+ * "free" while answers come from free model tiers, which shows the free-tier notice. The API has
+ * no public config endpoint, so the web build carries the setting. Anything but "paid" is free.
+ */
+export const llmTier: "free" | "paid" =
+  process.env.NEXT_PUBLIC_LLM_TIER === "paid" ? "paid" : "free";
+
+/** The API's per-user hourly message limit (spec 7.2). */
+export const MESSAGES_PER_HOUR = 20;

@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { EXPIRED_SESSION_CHAT_ID } from "../src/mocks/db";
 import { signIn } from "./helpers";
 
 test.describe("security headers", () => {
@@ -90,6 +91,19 @@ test.describe("sign-in", () => {
     if (isMobile) await page.getByRole("button", { name: "Show chats" }).click();
     await page.getByRole("button", { name: "Sign out" }).click();
     await expect(page).toHaveURL(/\/sign-in$/);
+    await page.goto("/");
+    await expect(page).toHaveURL(/\/sign-in$/);
+  });
+
+  test("a session the API refuses is ended and the reader is asked to sign in", async ({
+    page,
+  }) => {
+    await signIn(page);
+    await page.goto(`/chats/${EXPIRED_SESSION_CHAT_ID}`);
+    await expect(page).toHaveURL(/\/sign-in\?error=session&next=%2Fchats%2F00000000-/);
+    await expect(
+      page.getByText("Your session has ended. Sign in again to continue."),
+    ).toBeVisible();
     await page.goto("/");
     await expect(page).toHaveURL(/\/sign-in$/);
   });
