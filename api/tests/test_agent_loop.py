@@ -253,7 +253,7 @@ async def test_the_deadline_ends_the_answer_as_a_timeout(where: str) -> None:
     assert isinstance(events[-1], AgentUsage)
 
 
-async def test_history_and_question_reach_the_model() -> None:
+async def test_deck_constraints_from_history_and_current_question_reach_the_model() -> None:
     def said(role: str, content: str) -> MessageOut:
         return MessageOut.model_validate(
             {
@@ -266,9 +266,23 @@ async def test_history_and_question_reach_the_model() -> None:
             }
         )
 
-    history = [said("user", "Hi"), said("assistant", "Hello."), said("assistant", " ")]
+    constraints = (
+        "My commander is Atraxa. Keep cards within WUBG, include Sol Ring, focus on "
+        "+1/+1 counters, stay under $100, prioritize ramp, and exclude tutors."
+    )
+    history = [
+        said("user", constraints),
+        said("assistant", "I'll keep those deck constraints in mind."),
+    ]
     model = FakeChatModel([FakeChatModel.text_turn("Because.")])
-    await run(ChatAgent(model, backend()), request("Why?", history))
+    await run(ChatAgent(model, backend()), request("What ramp should I add?", history))
     (sent,) = model.requests
-    assert [m.role for m in sent.messages] == [Role.SYSTEM, Role.USER, Role.ASSISTANT, Role.USER]
-    assert sent.messages[-1].content == "Why?"
+    assert [m.role for m in sent.messages] == [
+        Role.SYSTEM,
+        Role.USER,
+        Role.ASSISTANT,
+        Role.USER,
+    ]
+    assert sent.messages[1].content == constraints
+    assert sent.messages[2].content == "I'll keep those deck constraints in mind."
+    assert sent.messages[-1].content == "What ramp should I add?"
