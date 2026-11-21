@@ -11,7 +11,10 @@ export interface paths {
       path?: never;
       cookie?: never;
     };
-    /** Health */
+    /**
+     * Health
+     * @description Liveness only: no database or JWKS call, so it stays cheap and always answers.
+     */
     get: operations["health_healthz_get"];
     put?: never;
     post?: never;
@@ -62,7 +65,10 @@ export interface paths {
       path?: never;
       cookie?: never;
     };
-    /** List Chats */
+    /**
+     * List Chats
+     * @description The caller's chats, most recently active first.
+     */
     get: operations["list_chats_v1_chats_get"];
     put?: never;
     /** Create Chat */
@@ -80,10 +86,14 @@ export interface paths {
       path?: never;
       cookie?: never;
     };
-    get?: never;
+    /** Get Chat */
+    get: operations["get_chat_v1_chats__chat_id__get"];
     put?: never;
     post?: never;
-    /** Delete Chat */
+    /**
+     * Delete Chat
+     * @description Deletes the chat with its messages.
+     */
     delete: operations["delete_chat_v1_chats__chat_id__delete"];
     options?: never;
     head?: never;
@@ -98,10 +108,16 @@ export interface paths {
       path?: never;
       cookie?: never;
     };
-    /** List Messages */
+    /**
+     * List Messages
+     * @description Messages oldest first; `next_cursor` continues forward in time.
+     */
     get: operations["list_messages_v1_chats__chat_id__messages_get"];
     put?: never;
-    /** Send Message */
+    /**
+     * Send Message
+     * @description Saves the message and streams the answer. Limits: 20 messages an hour, one stream.
+     */
     post: operations["send_message_v1_chats__chat_id__messages_post"];
     delete?: never;
     options?: never;
@@ -591,6 +607,73 @@ export interface operations {
     responses: {
       /** @description Successful Response */
       201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ChatOut"];
+        };
+      };
+      /** @description Unauthorized */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ErrorBody"];
+        };
+      };
+      /** @description Not Found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ErrorBody"];
+        };
+      };
+      /** @description Unprocessable Entity */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ErrorBody"];
+        };
+      };
+      /** @description Too Many Requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ErrorBody"];
+        };
+      };
+      /** @description Internal Server Error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ErrorBody"];
+        };
+      };
+    };
+  };
+  get_chat_v1_chats__chat_id__get: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        chat_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
         headers: {
           [name: string]: unknown;
         };
