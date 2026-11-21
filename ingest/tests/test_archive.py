@@ -1,3 +1,5 @@
+import gzip
+import json
 from collections.abc import Callable
 from pathlib import Path
 
@@ -9,10 +11,12 @@ class FakeStore:
     def __init__(self, existing: list[str] | None = None, *, broken: bool = False) -> None:
         self.objects: dict[str, bytes] = dict.fromkeys(existing or [], b"")
         self.broken = broken
+        self.content_types: set[str] = set()
 
-    def upload(self, key: str, path: Path) -> None:
+    def upload(self, key: str, path: Path, content_type: str) -> None:
         if self.broken:
             raise OSError("storage is down")
+        self.content_types.add(content_type)
         self.objects[key] = path.read_bytes()
 
     def prefixes(self) -> list[str]:
@@ -29,7 +33,11 @@ def test_archive_uploads_files_and_manifest_under_date(
     store = FakeStore()
     assert archive(store, "raw-snapshots", manifest, tmp_path) == "raw-snapshots/2026-11-21/"
     expected = {f"2026-11-21/{f.filename}" for f in manifest.files.values()}
-    assert set(store.objects) == expected | {f"2026-11-21/{MANIFEST_NAME}"}
+    assert set(store.objects) == expected | {f"2026-11-21/{MANIFEST_NAME}.gz"}
+    # The bucket only accepts gzip.
+    assert store.content_types == {"application/gzip"}
+    uploaded = json.loads(gzip.decompress(store.objects[f"2026-11-21/{MANIFEST_NAME}.gz"]))
+    assert uploaded == json.loads((tmp_path / MANIFEST_NAME).read_text())
 
 
 def test_archive_failure_is_not_fatal(

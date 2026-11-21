@@ -10,7 +10,7 @@ S3 access keys), checks every value against the live service, then writes:
 
 Re-running is safe: every write overwrites. Nothing is written to disk.
 
-    uv run python scripts/sync_env.py                 # both projects
+    j                 # both projects
     uv run python scripts/sync_env.py --env dev --dry-run
 
 Supabase token: SUPABASE_ACCESS_TOKEN, else the token `supabase login` stored.
