@@ -11,6 +11,8 @@ Card data comes from Scryfall bulk files (oracle cards, oracle tags, rulings), a
 - Deleting a snapshot cascades to its rows. We keep the active snapshot and the previous one in the database.
 - Raw bulk files go to a private Supabase Storage bucket, `raw-snapshots`, keeping the last 4 (Free plan: 1 GB storage, 50 MB per file). Cloudflare R2 is dropped.
 - Records that fail validation go to `corpus.quarantine` instead of being loaded.
+- `corpus.card_tags` holds direct Tagger taggings only. Materializing inherited tags would add ~200k rows per snapshot (measured 2026-11-21), so queries resolve the hierarchy through `corpus.tag_parents`.
+- `corpus.snapshots.content_sha256` (hash of the bulk files' hashes) makes a rerun on unchanged files a no-op.
 - All `corpus` and `app` tables have RLS enabled with no policies, and the `anon` and `authenticated` roles have no grants. Only the API reaches them.
 - `app.message_cards` stores the card name at answer time and has no foreign key to the corpus, so old chats survive snapshot retirement.
 
