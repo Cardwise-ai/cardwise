@@ -4,6 +4,7 @@ The app refuses to start on a deployed environment (Vercel preview or production
 required value is missing, so a misconfigured deploy fails at import instead of per request.
 """
 
+from pathlib import Path
 from typing import Annotated, Literal, Self
 from urllib.parse import urlsplit
 
@@ -54,6 +55,23 @@ class Settings(BaseSettings):
     heartbeat_s: Annotated[float, Field(gt=0, le=60)] = 15.0
 
     log_level: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = "INFO"
+
+    llm_config: Path | None = None
+    """Model chain file. Defaults to api/llm.toml (or ./llm.toml when running from api/)."""
+    gemini_api_key: SecretStr | None = None
+    openrouter_api_key: SecretStr | None = None
+    """Read here so keys in .env work too; other chain entries read their key from the process
+    environment. A chain entry without a key is left out; with no entries left, sending a
+    message answers 501."""
+
+    @property
+    def llm_keys(self) -> dict[str, str]:
+        """Model provider keys by environment variable name, for cardwise_llm."""
+        keys = {
+            "CARDWISE_GEMINI_API_KEY": self.gemini_api_key,
+            "CARDWISE_OPENROUTER_API_KEY": self.openrouter_api_key,
+        }
+        return {name: key.get_secret_value() for name, key in keys.items() if key is not None}
 
     @field_validator("web_origin", mode="before")
     @classmethod

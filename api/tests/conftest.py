@@ -18,7 +18,7 @@ import asyncpg
 import pytest
 
 from cardwise_api.agent.port import Agent
-from cardwise_api.retrieval import GrepSearchBackend
+from cardwise_api.retrieval import CardBackend, GrepSearchBackend
 from cardwise_api.settings import Settings
 from cardwise_api.testing import (
     FakeJwks,
@@ -55,8 +55,13 @@ HarnessFactory = Callable[..., Harness]
 def new_harness(tokens: Tokens, jwks: FakeJwks) -> Iterator[HarnessFactory]:
     made: list[Harness] = []
 
-    def make(*, agent: Agent | None = None, settings: Settings | None = None) -> Harness:
-        harness = make_harness(tokens, jwks, agent=agent, settings=settings)
+    def make(
+        *,
+        agent: Agent | None = None,
+        backend: CardBackend | None = None,
+        settings: Settings | None = None,
+    ) -> Harness:
+        harness = make_harness(tokens, jwks, agent=agent, backend=backend, settings=settings)
         made.append(harness)
         return harness
 
