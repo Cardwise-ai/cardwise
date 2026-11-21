@@ -1,0 +1,62 @@
+{
+  "$defs": {
+    "Color": {
+      "enum": [
+        "W",
+        "U",
+        "B",
+        "R",
+        "G"
+      ],
+      "title": "Color",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "description": "Find cards similar to a given card.",
+  "properties": {
+    "by": {
+      "description": "role: shares Tagger function tags. text: similar rules text.",
+      "enum": [
+        "role",
+        "text"
+      ],
+      "title": "By",
+      "type": "string"
+    },
+    "color_identity_within": {
+      "anyOf": [
+        {
+          "items": {
+            "$ref": "#/$defs/Color"
+          },
+          "type": "array",
+          "uniqueItems": true
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Color Identity Within"
+    },
+    "limit": {
+      "default": 10,
+      "maximum": 25,
+      "minimum": 1,
+      "title": "Limit",
+      "type": "integer"
+    },
+    "oracle_id": {
+      "format": "uuid",
+      "title": "Oracle Id",
+      "type": "string"
+    }
+  },
+  "required": [
+    "oracle_id",
+    "by"
+  ],
+  "title": "SimilarQuery",
+  "type": "object"
+}

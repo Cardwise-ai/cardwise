@@ -1,0 +1,174 @@
+{
+  "$defs": {
+    "Color": {
+      "enum": [
+        "W",
+        "U",
+        "B",
+        "R",
+        "G"
+      ],
+      "title": "Color",
+      "type": "string"
+    },
+    "Format": {
+      "description": "Legality keys as Scryfall names them. Ingest stores every key; queries use this subset.",
+      "enum": [
+        "commander",
+        "oathbreaker",
+        "brawl",
+        "standardbrawl",
+        "competitivebrawl",
+        "paupercommander",
+        "predh",
+        "duel",
+        "standard",
+        "future",
+        "pioneer",
+        "modern",
+        "legacy",
+        "vintage",
+        "pauper",
+        "penny",
+        "historic",
+        "timeless",
+        "gladiator",
+        "alchemy",
+        "premodern",
+        "oldschool"
+      ],
+      "title": "Format",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "description": "Find cards. Every filter that is set must match.",
+  "properties": {
+    "color_identity_within": {
+      "anyOf": [
+        {
+          "items": {
+            "$ref": "#/$defs/Color"
+          },
+          "type": "array",
+          "uniqueItems": true
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Only cards a commander with these colors can include. Empty means colorless.",
+      "title": "Color Identity Within"
+    },
+    "colors_include": {
+      "default": [],
+      "description": "Card color identity must include all of these.",
+      "items": {
+        "$ref": "#/$defs/Color"
+      },
+      "title": "Colors Include",
+      "type": "array",
+      "uniqueItems": true
+    },
+    "keywords": {
+      "default": [],
+      "description": "Keyword abilities the card must have, such as Flying.",
+      "items": {
+        "maxLength": 40,
+        "minLength": 1,
+        "type": "string"
+      },
+      "maxItems": 5,
+      "title": "Keywords",
+      "type": "array"
+    },
+    "legal_in": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Format"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Format the card must be legal in."
+    },
+    "limit": {
+      "default": 10,
+      "maximum": 25,
+      "minimum": 1,
+      "title": "Limit",
+      "type": "integer"
+    },
+    "mana_value_max": {
+      "anyOf": [
+        {
+          "maximum": 20,
+          "minimum": 0,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Mana Value Max"
+    },
+    "mana_value_min": {
+      "anyOf": [
+        {
+          "maximum": 20,
+          "minimum": 0,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Mana Value Min"
+    },
+    "tags": {
+      "default": [],
+      "description": "Scryfall Tagger oracle tags, such as ramp or sacrifice-outlet.",
+      "items": {
+        "pattern": "^[a-z0-9][a-z0-9-]{0,99}$",
+        "type": "string"
+      },
+      "maxItems": 5,
+      "title": "Tags",
+      "type": "array"
+    },
+    "text": {
+      "anyOf": [
+        {
+          "maxLength": 200,
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Words to match in name, type line or rules text.",
+      "title": "Text"
+    },
+    "types": {
+      "default": [],
+      "description": "Words the type line must contain, such as Creature or Elf.",
+      "items": {
+        "maxLength": 40,
+        "minLength": 1,
+        "type": "string"
+      },
+      "maxItems": 4,
+      "title": "Types",
+      "type": "array"
+    }
+  },
+  "title": "CardQuery",
+  "type": "object"
+}

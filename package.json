@@ -1,0 +1,19 @@
+{
+  "name": "cardwise",
+  "private": true,
+  "packageManager": "pnpm@12.21.0",
+  "engines": {
+    "node": ">=22.17 <23"
+  },
+  "scripts": {
+    "lint": "pnpm -r lint",
+    "typecheck": "pnpm -r typecheck",
+    "build": "pnpm -r build",
+    "format": "prettier --write apps",
+    "format:check": "prettier --check apps"
+  },
+  "devDependencies": {
+    "prettier": "^3.10.1",
+    "supabase": "3.2.0"
+  }
+}

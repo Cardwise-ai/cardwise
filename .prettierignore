@@ -1,0 +1,8 @@
+pnpm-lock.yaml
+**/.next/
+**/node_modules/
+api/openapi/
+packages/core/schemas/
+supabase/
+.venv/
+*.md

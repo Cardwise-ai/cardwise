@@ -1,0 +1,243 @@
+{
+  "$defs": {
+    "CardRef": {
+      "additionalProperties": false,
+      "description": "A card the answer refers to. The name always comes from our corpus, never the model.",
+      "properties": {
+        "image_uri": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Image Uri"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "oracle_id": {
+          "format": "uuid",
+          "title": "Oracle Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "oracle_id",
+        "name",
+        "image_uri"
+      ],
+      "title": "CardRef",
+      "type": "object"
+    },
+    "CardsEvent": {
+      "additionalProperties": false,
+      "description": "Every card the answer may link to. Card refs not listed here render as plain text.",
+      "properties": {
+        "cards": {
+          "items": {
+            "$ref": "#/$defs/CardRef"
+          },
+          "title": "Cards",
+          "type": "array"
+        },
+        "type": {
+          "const": "cards",
+          "default": "cards",
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "required": [
+        "cards"
+      ],
+      "title": "CardsEvent",
+      "type": "object"
+    },
+    "DoneEvent": {
+      "additionalProperties": false,
+      "properties": {
+        "message_id": {
+          "format": "uuid",
+          "title": "Message Id",
+          "type": "string"
+        },
+        "type": {
+          "const": "done",
+          "default": "done",
+          "title": "Type",
+          "type": "string"
+        },
+        "usage": {
+          "$ref": "#/$defs/UsageOut"
+        }
+      },
+      "required": [
+        "message_id",
+        "usage"
+      ],
+      "title": "DoneEvent",
+      "type": "object"
+    },
+    "ErrorEvent": {
+      "additionalProperties": false,
+      "properties": {
+        "code": {
+          "enum": [
+            "rate_limited",
+            "model_unavailable",
+            "internal"
+          ],
+          "title": "Code",
+          "type": "string"
+        },
+        "request_id": {
+          "title": "Request Id",
+          "type": "string"
+        },
+        "type": {
+          "const": "error",
+          "default": "error",
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "required": [
+        "code",
+        "request_id"
+      ],
+      "title": "ErrorEvent",
+      "type": "object"
+    },
+    "StartEvent": {
+      "additionalProperties": false,
+      "properties": {
+        "message_id": {
+          "format": "uuid",
+          "title": "Message Id",
+          "type": "string"
+        },
+        "type": {
+          "const": "start",
+          "default": "start",
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "required": [
+        "message_id"
+      ],
+      "title": "StartEvent",
+      "type": "object"
+    },
+    "TextEvent": {
+      "additionalProperties": false,
+      "properties": {
+        "text": {
+          "title": "Text",
+          "type": "string"
+        },
+        "type": {
+          "const": "text",
+          "default": "text",
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "required": [
+        "text"
+      ],
+      "title": "TextEvent",
+      "type": "object"
+    },
+    "ToolEvent": {
+      "additionalProperties": false,
+      "description": "Progress for the UI (\"Searching cards\u2026\"). Never carries tool arguments or results.",
+      "properties": {
+        "name": {
+          "enum": [
+            "search_cards",
+            "get_card",
+            "get_rulings",
+            "similar_cards"
+          ],
+          "title": "Name",
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "running",
+            "done"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "type": {
+          "const": "tool",
+          "default": "tool",
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "status"
+      ],
+      "title": "ToolEvent",
+      "type": "object"
+    },
+    "UsageOut": {
+      "additionalProperties": false,
+      "properties": {
+        "input_tokens": {
+          "title": "Input Tokens",
+          "type": "integer"
+        },
+        "output_tokens": {
+          "title": "Output Tokens",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "input_tokens",
+        "output_tokens"
+      ],
+      "title": "UsageOut",
+      "type": "object"
+    }
+  },
+  "discriminator": {
+    "mapping": {
+      "cards": "#/$defs/CardsEvent",
+      "done": "#/$defs/DoneEvent",
+      "error": "#/$defs/ErrorEvent",
+      "start": "#/$defs/StartEvent",
+      "text": "#/$defs/TextEvent",
+      "tool": "#/$defs/ToolEvent"
+    },
+    "propertyName": "type"
+  },
+  "oneOf": [
+    {
+      "$ref": "#/$defs/StartEvent"
+    },
+    {
+      "$ref": "#/$defs/TextEvent"
+    },
+    {
+      "$ref": "#/$defs/ToolEvent"
+    },
+    {
+      "$ref": "#/$defs/CardsEvent"
+    },
+    {
+      "$ref": "#/$defs/DoneEvent"
+    },
+    {
+      "$ref": "#/$defs/ErrorEvent"
+    }
+  ]
+}

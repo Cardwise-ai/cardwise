@@ -1,0 +1,16 @@
+{
+  "additionalProperties": false,
+  "description": "Get official rulings for a card.",
+  "properties": {
+    "oracle_id": {
+      "format": "uuid",
+      "title": "Oracle Id",
+      "type": "string"
+    }
+  },
+  "required": [
+    "oracle_id"
+  ],
+  "title": "RulingsLookup",
+  "type": "object"
+}

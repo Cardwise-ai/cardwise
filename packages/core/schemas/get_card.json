@@ -1,0 +1,35 @@
+{
+  "additionalProperties": false,
+  "description": "Get one card by exact Oracle ID or by name.",
+  "properties": {
+    "name": {
+      "anyOf": [
+        {
+          "maxLength": 150,
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Name"
+    },
+    "oracle_id": {
+      "anyOf": [
+        {
+          "format": "uuid",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Oracle Id"
+    }
+  },
+  "title": "CardLookup",
+  "type": "object"
+}
