@@ -38,6 +38,12 @@ PAYLOAD_DROP = frozenset(
         "multiverse_ids", "mtgo_id", "mtgo_foil_id", "tcgplayer_id", "tcgplayer_etched_id",
         "cardmarket_id", "arena_id", "resource_id", "card_back_id", "artist_ids",
         "illustration_id", "preview",
+        # Facts about the one printing Scryfall picked, not about the card. Set, rarity,
+        # artist and flavor text stay so answers can name where a card comes from.
+        "set_id", "set_type", "collector_number", "lang", "image_status", "image_updated_at",
+        "highres_image", "border_color", "frame", "frame_effects", "security_stamp", "finishes",
+        "foil", "nonfoil", "full_art", "textless", "oversized", "promo", "promo_types",
+        "booster", "story_spotlight", "variation", "variation_of", "reprint", "digital",
     }
 )  # fmt: skip
 FACE_PAYLOAD_DROP = frozenset({"object", "image_uris", "artist_id", "illustration_id"})

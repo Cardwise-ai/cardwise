@@ -161,8 +161,11 @@ def test_payload_drops_volatile_and_duplicated_fields(corpus: Corpus) -> None:
     row = card(corpus, "Llanowar Elves")
     for dropped in ("prices", "purchase_uris", "legalities", "image_uris", "oracle_text"):
         assert dropped not in row.payload
+    for printing_only in ("set_id", "frame", "foil", "collector_number", "image_status"):
+        assert printing_only not in row.payload
     assert row.payload["power"] == "1"
     assert row.payload["rarity"]
+    assert row.payload["set_name"]
     assert row.image_uris is not None
     assert set(row.image_uris) <= set(IMAGE_SIZES)
 
