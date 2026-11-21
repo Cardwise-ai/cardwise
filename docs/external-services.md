@@ -88,28 +88,24 @@ Then create the bucket by hand: Storage → New bucket → `raw-snapshots`, priv
 
 ## 6. Sign-in
 
-The spec planned email magic links. Supabase's built-in email only delivers to members of your Supabase org, at 2 emails an hour. Sending to testers needs custom SMTP, and every free SMTP provider wants a domain you own. Proposal: **sign in with GitHub for the POC**, which is free and needs no email. The API will check each signed-in user's email against an allowlist, because turning signups off would also block a first GitHub sign-in.
+Supabase Auth's email and password sign-in, invite-only, with no email sending. Supabase's built-in email delivers only to members of your Supabase org, at 2 emails an hour, and free SMTP providers need a domain you own. So the POC sends no email at all: you create each tester's account yourself and give them the password. GitHub or Google sign-in would also work, but each needs an OAuth app registered with that provider.
 
-Do this once per Supabase project. Each project needs its own GitHub OAuth app, because the callback URL differs.
+In both projects:
 
-1. github.com/organizations/Cardwise-ai/settings/applications → **New OAuth app**:
-
-   | Field | Production | Development |
-   |---|---|---|
-   | Application name | `Cardwise` | `Cardwise (dev)` |
-   | Homepage URL | the `cardwise-web` production URL (step 7) | `http://localhost:3000` |
-   | Authorization callback URL | `https://<prod-ref>.supabase.co/auth/v1/callback` | `https://<dev-ref>.supabase.co/auth/v1/callback` |
-   | Enable Device Flow | Off | Off |
-
-2. Generate a client secret. Copy the Client ID and the secret.
-3. Supabase → Authentication → Sign In / Providers → **GitHub**: on, then paste the Client ID and secret.
-4. Same page, **Email**: off.
-5. Authentication → URL Configuration:
+1. Authentication → Sign In / Providers:
+   - **Allow new users to sign up: off.** Only accounts you create exist.
+   - **Email** provider: on. **Confirm email: off**, so no confirmation email is sent.
+   - All other providers: off.
+2. Authentication → URL Configuration:
 
    | Field | Production | Development |
    |---|---|---|
-   | Site URL | `https://<web-prod-domain>` | `http://localhost:3000` |
-   | Redirect URLs | `https://<web-prod-domain>/auth/callback` | `http://localhost:3000/auth/callback` and `https://cardwise-web-*-<vercel-scope>.vercel.app/auth/callback` (previews) |
+   | Site URL | the `cardwise-web` production URL (step 7) | `http://localhost:3000` |
+   | Redirect URLs | `<web production URL>/**` | `http://localhost:3000/**` and `https://cardwise-web-*-<vercel-scope>.vercel.app/**` (previews) |
+
+3. Authentication → Users → **Add user → Create new user**: enter the email and a generated password, and tick **Auto Confirm User**. Do this for yourself in both projects and for each tester in production. Send passwords through a password manager share or Signal, not plain email. If someone forgets theirs, reset it on the same page.
+
+Password reset and email change by the user need email, so they wait for SMTP (after the POC, with a domain).
 
 ## 7. Vercel: web project
 
@@ -153,7 +149,6 @@ Not needed yet, because the API is still stubs. When it's time:
    | `CARDWISE_WEB_ORIGIN` | web production URL | web preview URL pattern |
    | `CARDWISE_GEMINI_API_KEY` | prod key | dev key |
    | `CARDWISE_OPENROUTER_API_KEY` | prod key | dev key |
-   | `CARDWISE_ALLOWED_EMAILS` | testers' GitHub emails, comma-separated | yours |
 
    The pooler URL is under Supabase → **Connect** → Transaction pooler; put the database password into it. The API verifies tokens with the project's public keys at `<project URL>/auth/v1/.well-known/jwks.json`, so no JWT secret is needed.
 
@@ -198,3 +193,5 @@ None of these are secret. Paste them in chat or into an issue, and the next task
 - `<prod-ref>` and `<dev-ref>`
 - the `cardwise-web` production URL and Vercel scope (team slug)
 - confirmation that the integration applied `20261121120000_init` to prod
+
+The setup script `scripts/setup-hosted.sh` walks through steps 1 to 9 and records the values in `.env.hosted` (git-ignored). Run it from Git Bash: `bash scripts/setup-hosted.sh`.
