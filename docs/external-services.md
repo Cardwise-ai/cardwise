@@ -9,14 +9,23 @@ Secrets go straight from a dashboard into Vercel, GitHub or your local `.env`. T
 | Service | Plan | Connected to the repo by | Deploys |
 |---|---|---|---|
 | Supabase `cardwise-prod` | Free | Supabase GitHub integration | Migrations and storage buckets on every push to `main` |
-| Supabase `cardwise-dev` | Free | Supabase CLI from your machine | Migrations when you run `supabase db push` |
-| Vercel `cardwise-web` | Hobby | Vercel GitHub app | Web app: production from `main`, a preview for every PR |
+| Supabase `cardwise-dev` | Free | Supabase GitHub integration | Migrations and storage buckets on every push to `dev` |
+| Vercel `cardwise-web` | Hobby | Vercel GitHub app | Web app: production from `main` (prod database), a preview for every other branch and PR (dev database) |
 | Vercel `cardwise-api` | Hobby | Vercel GitHub app | API, once the endpoints exist (Line C) |
 | Google AI Studio | Free tier | API key in Vercel | n/a |
 | OpenRouter | Free models | API key in Vercel | n/a |
 | GitHub Actions | Free | This repo | CI now; ingest, backups and live evals later |
 
-**Why the Supabase GitHub integration instead of a deploy workflow:** on every plan, the integration applies new migrations and creates the storage buckets declared in `supabase/config.toml` when `main` changes. No access token, project ID or database password has to live in GitHub. Preview branches (a database per PR) are a paid add-on, so we don't use them. CI already tests every migration against a fresh local Supabase.
+**Branches:** feature branches merge into `dev` (squash), which deploys to `cardwise-dev`. A release is a PR from `dev` into `main` (merge commit, so the two branches keep one history), which deploys to `cardwise-prod`. Every migration therefore runs on the hosted dev database before prod. A hotfix merged straight to `main` must be merged back into `dev`.
+
+| Branch | Supabase | Vercel | GitHub environment | Merge method |
+|---|---|---|---|---|
+| `dev` (default) | `cardwise-dev` | Preview | `dev` | squash |
+| `main` | `cardwise-prod` | Production | `prod` | merge commit |
+
+Both branches are protected by repo rulesets: changes only through PRs with green CI (`python`, `db`, `web`, `secrets`, `audit`), no force pushes, no deletion.
+
+**Why the Supabase GitHub integration instead of a deploy workflow:** on every plan, the integration applies new migrations and creates the storage buckets declared in `supabase/config.toml` when its production branch changes. No access token, project ID or database password has to live in GitHub. Preview branches (a database per PR) are a paid add-on, so we don't use them. CI already tests every migration against a fresh local Supabase.
 
 The integration does not deploy Auth or API settings by default. Those are set once in the dashboard (steps 5 and 6).
 
@@ -31,9 +40,7 @@ The integration does not deploy Auth or API settings by default. Those are set o
 
 ## 2. Repo protection
 
-GitHub Free organizations can't protect branches in private repos. Until the repo is public or the org is on Team, branch rules are a habit, not enforced:
-- merge to `main` only through PRs with green CI;
-- Settings → General → Pull Requests: allow squash merge only, and turn on "Automatically delete head branches".
+The repo is public, so GitHub Free enforces rulesets. Settings → Rules → Rulesets has `dev` and `main` as described above. Settings → General → Pull Requests allows squash and merge commits (each branch's ruleset narrows it to one), and deletes head branches after merge.
 
 ## 3. Supabase organization and projects
 
@@ -70,20 +77,26 @@ GitHub Free organizations can't protect branches in private repos. Until the rep
 4. **Enable integration.** The next push to `main` applies `supabase/migrations/*` and creates the `raw-snapshots` bucket.
 5. Check it: Database → Migrations lists `20261121120000_init`; Table Editor → schema `corpus` has the tables; Storage lists `raw-snapshots` as private.
 
-**Rule from now on:** change the production schema only through a migration file merged to `main`. If you edit tables in the dashboard, the migration history stops matching the repo and the next deploy fails.
+**Rule from now on:** change either schema only through a migration file merged to `dev` (then released to `main`). If you edit tables in the dashboard, the migration history stops matching the repo and the next deploy fails.
 
-## 5. Bring `cardwise-dev` up to date
+## 5. Connect the repo to `cardwise-dev`
 
-Run these from the repo root in PowerShell (Git Bash can hide the CLI's prompts):
+Same as step 4, in `cardwise-dev` → Project Settings → Integrations → GitHub Integration. The Supabase app is already installed on the repo, so GitHub won't ask again. Use the same options except:
+
+| Option | Value |
+|---|---|
+| Production branch | `dev` |
+
+The next push to `dev` applies any migration `cardwise-dev` hasn't seen and creates `raw-snapshots`. Check it the same way as step 4.
+
+If the dev database ever needs a migration by hand (for example after a reset), run from the repo root in PowerShell:
 
 ```sh
-pnpm exec supabase login                                  # opens the browser once
-pnpm exec supabase db push --remote=<dev-ref> --password <dev-db-password>
+pnpm exec supabase login                       # opens the browser once
+pnpm exec supabase db push --remote=<dev-ref> --yes
 ```
 
-Supabase CLI 3.x pushes to the local Docker database unless `--remote` is given. `<dev-ref>` is in the dev project's URL: `https://supabase.com/dashboard/project/<dev-ref>`. Once the `dev` environment has `CARDWISE_DATABASE_URL` (step 10), the `migrate-dev` workflow does this on every migration change.
-
-Then create the bucket by hand: Storage → New bucket → `raw-snapshots`, private, 50 MB file limit.
+Supabase CLI 3.x pushes to the local Docker database unless `--remote` is given. `<dev-ref>` is in the dev project's URL: `https://supabase.com/dashboard/project/<dev-ref>`.
 
 ## 6. Sign-in
 
@@ -166,11 +179,11 @@ Not needed yet, because the API is still stubs. When it's time:
 
 ## 10. GitHub Actions secrets
 
-CI needs none: it runs against a local Supabase in Docker with the fake model. The `ingest` and `migrate-dev` workflows need a GitHub **Environment** per Supabase project. `dev` and `prod` exist already (repo → Settings → Environments); `prod` only accepts deployments from `main`. Add these secrets to **each** environment, with that project's values:
+CI needs none: it runs against a local Supabase in Docker with the fake model. The `ingest` workflow needs a GitHub **Environment** per Supabase project. `dev` and `prod` exist already (repo → Settings → Environments); `dev` only accepts runs from the `dev` branch and `prod` only from `main`. `scripts/sync_env.py` (below) fills them in for you. By hand, add these secrets to **each** environment, with that project's values:
 
 | Secret | Workflow | Where to get it |
 |---|---|---|
-| `CARDWISE_DATABASE_URL` | ingest, migrate-dev (dev only), chat backups | Supabase → **Connect** → Connection string → **Session pooler** (port 5432), with the database password filled in. It looks like `postgresql://postgres.<ref>:<password>@aws-0-<region>.pooler.supabase.com:5432/postgres`. GitHub runners can't reach the IPv6-only direct connection, and the transaction pooler breaks the session lock ingest takes. |
+| `CARDWISE_DATABASE_URL` | ingest, chat backups | Supabase → **Connect** → Connection string → **Session pooler** (port 5432), with the database password filled in. It looks like `postgresql://postgres.<ref>:<password>@aws-0-<region>.pooler.supabase.com:5432/postgres`. GitHub runners can't reach the IPv6-only direct connection, and the transaction pooler breaks the session lock ingest takes. |
 | `CARDWISE_STORAGE_S3_ENDPOINT` | ingest | Project Settings → Storage → **S3 Connection** → Endpoint (`https://<ref>.storage.supabase.co/storage/v1/s3`) |
 | `CARDWISE_STORAGE_S3_REGION` | ingest | same section → Region |
 | `CARDWISE_STORAGE_S3_ACCESS_KEY_ID` / `CARDWISE_STORAGE_S3_SECRET_ACCESS_KEY` | ingest | same page → **S3 Access Keys** → New access key. The secret is shown once. These keys can read and write every bucket in the project but nothing else. |
@@ -179,9 +192,21 @@ CI needs none: it runs against a local Supabase in Docker with the fake model. T
 
 The S3 secrets are optional: without them ingest still loads the database and logs that the raw files were not archived.
 
-`ingest` runs every Monday into dev, then prod. Run it by hand from Actions → ingest → **Run workflow**, choosing the environment. A run on unchanged files does nothing. If the card count moves more than 5%, the run fails and the live corpus stays; check the data, then rerun with **allow count drift**. `migrate-dev` applies new migrations to dev whenever `supabase/migrations` changes on `main`.
+`ingest` runs every Monday on `dev` into the dev project; if that succeeds it starts a prod run on `main`. Run it by hand from Actions → ingest → **Run workflow**: pick branch `dev` with environment `dev`, or branch `main` with environment `prod` (any other pairing is refused by the environment). A run on unchanged files does nothing. If the card count moves more than 5%, the run fails and the live corpus stays; check the data, then rerun with **allow count drift**.
 
-Dependabot PRs can't read secrets, so jobs that use them run only on `main` or by hand.
+Dependabot PRs can't read secrets, so jobs that use them run only on `dev`, `main` or by hand.
+
+### Sync script
+
+`scripts/sync_env.py` sets the GitHub environment secrets above and the two `NEXT_PUBLIC_SUPABASE_*` Vercel variables (step 7) for both projects. It reads the refs and Vercel scope from `.env.hosted`, looks up the pooler host, region and publishable key through the Supabase Management API, and asks only for what Supabase never shows again: the database password and the S3 access key pair. It tests each value against the live service before writing it, writes nothing to disk, and is safe to rerun. Run it from the repo root in PowerShell after `pnpm exec supabase login`, `gh auth login` and `npx vercel login`:
+
+```sh
+uv run python scripts/sync_env.py --dry-run     # check only
+uv run python scripts/sync_env.py               # both projects
+uv run python scripts/sync_env.py --env dev     # one project
+```
+
+An empty answer skips that group. Rotating the database password or an S3 key means rerunning it.
 
 ## 11. Local `.env`
 

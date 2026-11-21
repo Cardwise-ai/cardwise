@@ -48,6 +48,8 @@ ignore = ["ANN401"]
 
 [tool.ruff.lint.per-file-ignores]
 "**/tests/**" = ["S101", "ANN", "FBT"]
+# Operator scripts talk to a terminal.
+"scripts/**" = ["T201"]
 # Vendor SDKs may only be imported inside the LLM adapters (see docs/adr/0003).
 "packages/llm/src/cardwise_llm/adapters/**" = ["TID251"]
 
@@ -68,7 +70,7 @@ plugins = ["pydantic.mypy"]
 warn_unreachable = true
 mypy_path = ["packages/core/src", "packages/llm/src", "api/src", "ingest/src", "evals/src"]
 explicit_package_bases = true
-files = ["packages", "api", "ingest", "evals", "supabase/tests"]
+files = ["packages", "api", "ingest", "evals", "scripts", "supabase/tests"]
 
 [tool.pydantic-mypy]
 init_forbid_extra = true

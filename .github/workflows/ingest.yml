@@ -1,7 +1,9 @@
 name: ingest
 
-# Loads the Scryfall corpus into a Supabase project. Weekly into both projects, or on demand.
-# Secrets live in the GitHub environments `dev` and `prod` (docs/external-services.md).
+# Loads the Scryfall corpus into a Supabase project, weekly or on demand.
+# Secrets live in the GitHub environments `dev` and `prod` (docs/external-services.md). Each
+# environment only accepts its own branch: dev from `dev`, prod from `main`. The schedule runs
+# on the default branch (`dev`), loads dev, and if that succeeds starts the prod run on `main`.
 
 on:
   schedule:
@@ -30,16 +32,11 @@ env:
 
 jobs:
   ingest:
-    strategy:
-      fail-fast: false
-      max-parallel: 1
-      matrix:
-        environment: ${{ github.event_name == 'schedule' && fromJSON('["dev", "prod"]') || fromJSON(format('["{0}"]', inputs.environment)) }}
     runs-on: ubuntu-24.04
     timeout-minutes: 30
-    environment: ${{ matrix.environment }}
+    environment: ${{ inputs.environment || 'dev' }}
     concurrency:
-      group: ingest-${{ matrix.environment }}
+      group: ingest-${{ inputs.environment || 'dev' }}
       cancel-in-progress: false
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -58,7 +55,7 @@ jobs:
           CARDWISE_STORAGE_S3_SECRET_ACCESS_KEY: ${{ secrets.CARDWISE_STORAGE_S3_SECRET_ACCESS_KEY }}
           FORCE: ${{ inputs.force && '--force' || '' }}
           ALLOW_DRIFT: ${{ inputs.allow_count_drift && '--allow-count-drift' || '' }}
-          ENVIRONMENT: ${{ matrix.environment }}
+          ENVIRONMENT: ${{ inputs.environment || 'dev' }}
         run: |
           if [ -z "$CARDWISE_DATABASE_URL" ]; then
             echo "::error::CARDWISE_DATABASE_URL is not set in the $ENVIRONMENT environment"
@@ -66,3 +63,18 @@ jobs:
           fi
           # shellcheck disable=SC2086
           uv run --no-sync python -m cardwise_ingest run --work-dir "$RUNNER_TEMP/bulk" $FORCE $ALLOW_DRIFT
+
+  prod:
+    # GITHUB_TOKEN may start workflow_dispatch runs; the prod environment only accepts `main`.
+    needs: ingest
+    if: github.event_name == 'schedule'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      actions: write
+    steps:
+      - name: Start the prod run on main
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: gh workflow run ingest.yml --repo "$REPO" --ref main -f environment=prod
