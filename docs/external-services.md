@@ -148,7 +148,14 @@ Password reset and email change by the user need email, so they wait for SMTP (a
 
 ## 8. Vercel: API project
 
-The API is ready to deploy (chats, streaming, auth and rate limits; card endpoints and the agent answer 501 until D5/D9). Nothing below has been run yet; the first deploy proves the uv workspace packaging.
+The API is deployed to Vercel for dev. Production is intentionally not configured or deployed until S2 passes.
+
+Current dev setup:
+- Vercel project `cardwise-api` is connected to `Cardwise-ai/cardwise`, with framework **FastAPI**, root directory `api`, source files outside the root enabled, and production branch `main`.
+- The Preview deployment is available at `https://cardwise-api-git-dev-yhaliwaizman.vercel.app`; its `/healthz` returns `{"status":"ok"}` and unauthenticated `GET /v1/chats` returns 401.
+- Preview uses the dev Supabase project and transaction pooler, dev model keys, and a CORS regex for web preview origins. `cardwise-web` Preview uses this API URL.
+- Vercel Authentication stays enabled on the web project. It is disabled on the API project because browser-to-API requests cannot use the Vercel SSO flow; all `/v1` routes require a Supabase JWT, while `/healthz` is intentionally public.
+- Both Supabase JWKS endpoints currently advertise ES256 signing keys.
 
 What's in the repo:
 - `api/index.py` re-exports `cardwise_api.main:app`; `[tool.vercel] entrypoint = "index:app"` in `api/pyproject.toml` points Vercel at it.
@@ -157,9 +164,9 @@ What's in the repo:
 Steps:
 
 1. Check the token signing keys on **both** Supabase projects: Project Settings → **JWT Keys**. The current key must be asymmetric (ECC P-256 or RSA). If it still says "Legacy JWT secret", click **Migrate JWT secret**, then **Rotate keys** so the new ECC key signs tokens. The API only accepts ES256/RS256 tokens checked against `<project URL>/auth/v1/.well-known/jwks.json`; it never sees a JWT secret.
-2. vercel.com/new → import `cardwise` again → project name `cardwise-api`, framework **FastAPI**, root directory `api`.
+2. The project is created and connected to the repository as described above.
 3. Project Settings → Build and Deployment → Root Directory → **Include files outside the root directory: On**. The API imports `packages/core` and `packages/llm` from the uv workspace.
-4. Deployment Protection as for the web project. Function region is set by `vercel.json`.
+4. Do not enable Vercel Authentication for this API project: it blocks browser requests from the web app. Function region is set by `vercel.json`; API authorization is enforced with Supabase JWTs.
 5. Environment variables, all **sensitive**:
 
    | Name | Production | Preview |
@@ -172,8 +179,8 @@ Steps:
    | `CARDWISE_OPENROUTER_API_KEY` | prod key | dev key |
 
    The pooler URL is under Supabase → **Connect** → Transaction pooler; put the database password into it. Use port **6543**: the API opens one connection per request and never prepares named statements, which is what the transaction pooler needs (ADR 0007). `VERCEL_ENV` tells the app it is deployed: it then refuses to start without `CARDWISE_DATABASE_URL` and an https `CARDWISE_SUPABASE_URL`, sends HSTS and hides `/openapi.json`. Optional tuning: `CARDWISE_LOG_LEVEL`, `CARDWISE_MESSAGES_PER_HOUR` (default 20), `CARDWISE_CONCURRENT_STREAMS` (default 1).
-6. Deploy, then check `https://<api-url>/healthz` returns `{"status":"ok"}` and `GET /v1/chats` without a token returns 401 with the JSON error shape.
-7. Set `NEXT_PUBLIC_API_URL` on `cardwise-web` (step 7) to the API URLs.
+6. Deploy a Preview, then check `https://<api-url>/healthz` returns `{"status":"ok"}` and `GET /v1/chats` without a token returns 401 with the JSON error shape. The dev Preview currently passes both checks.
+7. Set `NEXT_PUBLIC_API_URL` on `cardwise-web` Preview to the API Preview URL. The dev Preview currently uses `https://cardwise-api-git-dev-yhaliwaizman.vercel.app`; do not set the production web value until S2 passes.
 
 If the build can't install the workspace packages, fall back to a pinned requirements file: `uv export --package cardwise-api --no-dev --frozen --no-hashes -o api/requirements.txt` plus copying `packages/*/src` into the bundle, and record what worked here.
 
