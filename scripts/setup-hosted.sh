@@ -266,10 +266,18 @@ pause "Once 20261121120000_init is listed (and Storage shows raw-snapshots), pre
 # ── 6 ─────────────────────────────────────────────────────────────────────
 stage "Supabase: migrate cardwise-dev"
 say "This runs the Supabase CLI: login (browser), link (asks for the dev DB password), db push."
+note "In Git Bash the CLI's own prompts can be invisible, so the wizard asks instead."
 if confirm "Apply the repo's migrations to cardwise-dev now?"; then
-  pnpm exec supabase login
-  pnpm exec supabase link --project-ref "$SUPABASE_DEV_REF"
-  pnpm exec supabase db push
+  if ! pnpm exec supabase projects list >/dev/null 2>&1; then
+    open_url "https://supabase.com/dashboard/account/tokens"
+    step "Generate new token, name it cardwise-cli. Copy it."
+    ask_secret SUPABASE_CLI_TOKEN "Paste the access token (hidden, not saved):"
+    pnpm exec supabase login --token "$SUPABASE_CLI_TOKEN" </dev/null
+  fi
+  ask_secret SUPABASE_DEV_DB_PASSWORD "Paste the cardwise-dev database password (hidden, not saved):"
+  SUPABASE_DB_PASSWORD="$SUPABASE_DEV_DB_PASSWORD" \
+    pnpm exec supabase link --project-ref "$SUPABASE_DEV_REF" </dev/null
+  SUPABASE_DB_PASSWORD="$SUPABASE_DEV_DB_PASSWORD" pnpm exec supabase db push --yes </dev/null
 fi
 open_url "https://supabase.com/dashboard/project/${SUPABASE_DEV_REF}/storage/buckets"
 step "New bucket: raw-snapshots, Public OFF, restrict file size to 50 MB. Save."
