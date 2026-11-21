@@ -74,15 +74,14 @@ GitHub Free organizations can't protect branches in private repos. Until the rep
 
 ## 5. Bring `cardwise-dev` up to date
 
-Run these from the repo root on your machine:
+Run these from the repo root in PowerShell (Git Bash can hide the CLI's prompts):
 
 ```sh
-pnpm exec supabase login                       # opens the browser once
-pnpm exec supabase link --project-ref <dev-ref> # asks for the dev database password
-pnpm exec supabase db push
+pnpm exec supabase login                                  # opens the browser once
+pnpm exec supabase db push --remote=<dev-ref> --password <dev-db-password>
 ```
 
-`<dev-ref>` is in the dev project's URL: `https://supabase.com/dashboard/project/<dev-ref>`.
+Supabase CLI 3.x pushes to the local Docker database unless `--remote` is given. `<dev-ref>` is in the dev project's URL: `https://supabase.com/dashboard/project/<dev-ref>`.
 
 Then create the bucket by hand: Storage → New bucket → `raw-snapshots`, private, 50 MB file limit.
 
