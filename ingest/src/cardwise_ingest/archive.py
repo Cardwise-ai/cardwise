@@ -4,6 +4,7 @@ Archives are for replay and debugging, not backup, so a failure here is logged a
 goes on without one.
 """
 
+import gzip
 import logging
 from pathlib import Path
 from typing import TYPE_CHECKING, Protocol
@@ -20,9 +21,12 @@ log = logging.getLogger(__name__)
 MAX_OBJECT_BYTES = 50 * 1024 * 1024
 """Supabase Free plan upload limit per object."""
 
+CONTENT_TYPE = "application/gzip"
+"""The bucket accepts gzip only (supabase/config.toml), so the manifest is gzipped too."""
+
 
 class ObjectStore(Protocol):
-    def upload(self, key: str, path: Path) -> None: ...
+    def upload(self, key: str, path: Path, content_type: str) -> None: ...
 
     def prefixes(self) -> list[str]:
         """Top-level `<date>/` prefixes in the bucket."""
@@ -55,8 +59,10 @@ class S3Store:
         )
         return cls(client, settings.storage_bucket)
 
-    def upload(self, key: str, path: Path) -> None:
-        self._client.upload_file(str(path), self._bucket, key)
+    def upload(self, key: str, path: Path, content_type: str) -> None:
+        self._client.upload_file(
+            str(path), self._bucket, key, ExtraArgs={"ContentType": content_type}
+        )
 
     def prefixes(self) -> list[str]:
         found: list[str] = []
@@ -85,9 +91,11 @@ def archive(store: ObjectStore, bucket: str, manifest: Manifest, directory: Path
                     "%s is %d bytes, over the upload limit; not archived", f.filename, f.size
                 )
                 return None
+        manifest_gz = directory / f"{MANIFEST_NAME}.gz"
+        manifest_gz.write_bytes(gzip.compress((directory / MANIFEST_NAME).read_bytes(), mtime=0))
         for f in manifest.files.values():
-            store.upload(prefix + f.filename, directory / f.filename)
-        store.upload(prefix + MANIFEST_NAME, directory / MANIFEST_NAME)
+            store.upload(prefix + f.filename, directory / f.filename, CONTENT_TYPE)
+        store.upload(prefix + manifest_gz.name, manifest_gz, CONTENT_TYPE)
     except Exception:
         log.exception("archiving raw files failed; continuing without an archive")
         return None
