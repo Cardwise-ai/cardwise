@@ -2,7 +2,7 @@
 
 Ask questions about Magic: The Gathering cards and get answers that link to the cards. Cardwise is a chat assistant over Scryfall card data and Scryfall Tagger tags. Deckbuilding stays on Moxfield and Archidekt.
 
-Design and research live in [Cardwise-ai/research](https://github.com/Cardwise-ai/research). Decisions are recorded in [docs/adr](docs/adr).
+Design and research live in [Cardwise-ai/research](https://github.com/Cardwise-ai/research). Decisions are recorded in [docs/adr](docs/adr). Hosted services (Supabase, Vercel, model providers) are set up with [docs/external-services.md](docs/external-services.md).
 
 ## Layout
 
