@@ -37,6 +37,7 @@ uv run pytest -m "not db and not live"
 pnpm format:check
 pnpm lint
 pnpm typecheck
+pnpm test
 pnpm build
 ```
 
@@ -52,4 +53,14 @@ After changing a contract model, regenerate the committed schemas:
 ```sh
 uv run python -m cardwise_core.schemas
 uv run python -m cardwise_api.export_schemas
+pnpm --filter @cardwise/web gen:api
+```
+
+## Web app without the API
+
+`pnpm --filter @cardwise/web dev:mock` runs the web app against MSW mocks of the API contract, with a cookie session in place of Supabase (any email and password signs in). The end-to-end tests build and serve the same mock mode:
+
+```sh
+pnpm --filter @cardwise/web exec playwright install chromium
+pnpm --filter @cardwise/web test:e2e
 ```
