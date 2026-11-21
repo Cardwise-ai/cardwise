@@ -1,0 +1,155 @@
+[
+  {
+    "id": "mana-rocks",
+    "question": "What mana rocks can go in any commander deck?",
+    "query": {"tags": ["mana-rock"], "legal_in": "commander"},
+    "expect": ["Sol Ring"]
+  },
+  {
+    "id": "mono-green-ramp",
+    "question": "Best ramp for my mono-green commander?",
+    "query": {"tags": ["ramp"], "color_identity_within": ["G"], "legal_in": "commander"},
+    "expect": [
+      "Cultivate",
+      "Fallaji Wayfarer",
+      "Invasion of Zendikar // Awakened Skyclave",
+      "Llanowar Elves",
+      "Sol Ring"
+    ]
+  },
+  {
+    "id": "one-drop-dorks",
+    "question": "Which one-mana creatures tap for mana?",
+    "query": {"tags": ["mana-dork"], "mana_value_max": 1},
+    "expect": ["Llanowar Elves"],
+    "exclude": ["Fallaji Wayfarer"]
+  },
+  {
+    "id": "izzet-cheap-removal",
+    "question": "Cheap removal for an Izzet deck, four mana or less?",
+    "query": {"tags": ["removal"], "color_identity_within": ["U", "R"], "mana_value_max": 4},
+    "expect": ["Bonecrusher Giant // Stomp", "Fire // Ice"],
+    "exclude": ["Kozilek, Butcher of Truth"]
+  },
+  {
+    "id": "basic-land-search-text",
+    "question": "Cards that search your library for basic lands",
+    "query": {"text": "search your library for basic land cards"},
+    "expect": ["Cultivate", "Invasion of Zendikar // Awakened Skyclave"]
+  },
+  {
+    "id": "legendary-eldrazi",
+    "question": "Legendary Eldrazi I could use as a commander",
+    "query": {"types": ["Legendary", "Eldrazi"], "legal_in": "commander"},
+    "expect": ["Kozilek, Butcher of Truth"]
+  },
+  {
+    "id": "white-fliers",
+    "question": "Flying creatures for a mono-white deck",
+    "query": {"types": ["Creature"], "keywords": ["Flying"], "color_identity_within": ["W"]},
+    "expect": ["Bruna, the Fading Light"],
+    "exclude": ["Delver of Secrets // Insectile Aberration"]
+  },
+  {
+    "id": "red-haste",
+    "question": "Red cards with haste",
+    "query": {"keywords": ["haste"], "colors_include": ["R"]},
+    "expect": ["Akki Lavarunner // Tok-Tok, Volcano Born"],
+    "exclude": ["Invasion of Zendikar // Awakened Skyclave"]
+  },
+  {
+    "id": "colorless-artifacts",
+    "question": "Colorless artifacts legal in commander",
+    "query": {"types": ["Artifact"], "color_identity_within": [], "legal_in": "commander"},
+    "expect": ["Sol Ring"],
+    "exclude": ["Gleemax"]
+  },
+  {
+    "id": "burn",
+    "question": "Burn spells that can hit any target",
+    "query": {"tags": ["burn"]},
+    "expect": ["Bonecrusher Giant // Stomp", "Fire // Ice"]
+  },
+  {
+    "id": "card-draw",
+    "question": "What draws cards?",
+    "query": {"tags": ["draw"]},
+    "expect": ["Fire // Ice", "Kozilek, Butcher of Truth"]
+  },
+  {
+    "id": "damage-instants",
+    "question": "Instants that deal damage",
+    "query": {"text": "damage", "types": ["Instant"]},
+    "expect": ["Bonecrusher Giant // Stomp", "Fire // Ice"]
+  },
+  {
+    "id": "black-reanimation",
+    "question": "Reanimation for a mono-black commander deck",
+    "query": {"tags": ["reanimate"], "color_identity_within": ["B"]},
+    "expect": ["Agadeem's Awakening // Agadeem, the Undercrypt"],
+    "exclude": ["Bruna, the Fading Light"]
+  },
+  {
+    "id": "graveyard-to-battlefield",
+    "question": "Cards that return creature cards from the graveyard to the battlefield",
+    "query": {"text": "return creature card from graveyard to battlefield"},
+    "expect": ["Agadeem's Awakening // Agadeem, the Undercrypt"]
+  },
+  {
+    "id": "name-sol-ring",
+    "question": "Tell me about Sol Ring",
+    "query": {"text": "Sol Ring"},
+    "expect": ["Sol Ring"],
+    "first": "Sol Ring"
+  },
+  {
+    "id": "battles",
+    "question": "Show me some battles",
+    "query": {"types": ["Battle"]},
+    "expect": ["Invasion of Zendikar // Awakened Skyclave"]
+  },
+  {
+    "id": "spell-lands",
+    "question": "Lands legal in commander",
+    "query": {"types": ["Land"], "legal_in": "commander"},
+    "expect": ["Agadeem's Awakening // Agadeem, the Undercrypt"]
+  },
+  {
+    "id": "cheap-blue-fliers",
+    "question": "Cheap blue fliers, two mana or less",
+    "query": {"colors_include": ["U"], "keywords": ["Flying"], "mana_value_max": 2},
+    "expect": ["Delver of Secrets // Insectile Aberration"]
+  },
+  {
+    "id": "huge-colorless",
+    "question": "Ten-plus mana bombs for commander",
+    "query": {"mana_value_min": 10, "legal_in": "commander"},
+    "expect": ["Kozilek, Butcher of Truth"],
+    "exclude": ["Gleemax"]
+  },
+  {
+    "id": "annihilator",
+    "question": "Creatures with annihilator",
+    "query": {"keywords": ["Annihilator"]},
+    "expect": ["Kozilek, Butcher of Truth"]
+  },
+  {
+    "id": "elves",
+    "question": "Elves for an elf tribal deck",
+    "query": {"types": ["Elf"]},
+    "expect": ["Llanowar Elves"]
+  },
+  {
+    "id": "land-tutors",
+    "question": "Land tutors for commander",
+    "query": {"tags": ["tutor"], "legal_in": "commander"},
+    "expect": ["Cultivate", "Invasion of Zendikar // Awakened Skyclave"]
+  },
+  {
+    "id": "unknown-tag",
+    "question": "A tag the model made up returns nothing rather than everything",
+    "query": {"tags": ["not-a-real-tag"]},
+    "expect": [],
+    "empty": true
+  }
+]
