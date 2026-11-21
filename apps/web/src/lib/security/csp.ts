@@ -68,7 +68,7 @@ export function buildCsp(options: CspOptions): string {
 
 /** Headers that do not depend on the request. Applied to every route in next.config.ts. */
 export const staticSecurityHeaders: ReadonlyArray<{ key: string; value: string }> = [
-  { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains; preload" },
+  { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains" },
   { key: "X-Content-Type-Options", value: "nosniff" },
   { key: "X-Frame-Options", value: "DENY" },
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },

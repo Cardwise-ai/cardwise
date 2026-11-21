@@ -1,8 +1,9 @@
 import type { NextConfig } from "next";
 import { staticSecurityHeaders } from "./src/lib/security/csp";
 
-if (process.env.NEXT_PUBLIC_API_MOCKING === "enabled" && process.env.VERCEL_ENV === "production") {
-  throw new Error("NEXT_PUBLIC_API_MOCKING must not be enabled in production.");
+// Previews are the dev environment testers sign in to, so mocks are refused on every Vercel build.
+if (process.env.NEXT_PUBLIC_API_MOCKING === "enabled" && process.env.VERCEL) {
+  throw new Error("NEXT_PUBLIC_API_MOCKING must not be enabled on Vercel.");
 }
 
 const nextConfig: NextConfig = {
