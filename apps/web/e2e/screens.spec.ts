@@ -22,7 +22,9 @@ test("capture screens", async ({ page }, info) => {
 
   await signIn(page);
   await page.goto("/");
-  await expect(page.getByRole("heading", { name: "Ask about cards for your deck" })).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "What is your deck trying to do?" }),
+  ).toBeVisible();
   if (!mobile)
     await expect(page.getByRole("link", { name: "Sacrifice outlets for Meren" })).toBeVisible();
   await shot(page, "2-new-chat", project);

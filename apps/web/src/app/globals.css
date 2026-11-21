@@ -1,24 +1,26 @@
 @import "tailwindcss";
 
 /*
- * Design tokens (engineering spec §8.2). The UI stays quiet so card art and oracle text carry
- * the color. Dark mode is out of scope; names describe roles so a dark set can be added.
+ * The desk borrows its colors from a playmat, card stock, and old brass hardware. Mana colors
+ * remain reserved for actual mana symbols and color-identity pips.
  */
 @theme {
   --color-*: initial;
   --color-white: #ffffff;
   --color-transparent: transparent;
-  --color-surface: #f3f4f1;
-  --color-panel: #ffffff;
-  --color-ink: #22262b;
-  --color-muted: #5d646c;
-  --color-rule: #d6d9d4;
-  --color-rule-strong: #b8beb6;
-  --color-accent: #2f5d50;
-  --color-accent-strong: #244a40;
-  --color-accent-wash: #e7eeea;
-  --color-hover: #e9ebe6;
-  --color-placeholder: #e3e6e1;
+  --color-surface: #e6ede5;
+  --color-panel: #fbfaf4;
+  --color-ink: #1b2a25;
+  --color-muted: #4e625a;
+  --color-rule: #c7d3c9;
+  --color-rule-strong: #9cab9f;
+  --color-accent: #1d4b40;
+  --color-accent-strong: #14382f;
+  --color-accent-wash: #d9e7dd;
+  --color-hover: #dde7dd;
+  --color-placeholder: #e1e9e1;
+  --color-brass: #b18a3c;
+  --color-river: #36798a;
   --color-danger: #9c2f2a;
   --color-danger-strong: #7f2622;
   --color-danger-wash: #f8ecea;
@@ -128,6 +130,10 @@
 
 /* Answer text rendered by components/markdown.tsx. */
 @layer components {
+  .dark-field :focus-visible {
+    outline-color: var(--color-panel);
+  }
+
   .prose-answer {
     overflow-wrap: anywhere;
   }

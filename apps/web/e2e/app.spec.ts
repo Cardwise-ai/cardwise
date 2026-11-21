@@ -13,6 +13,29 @@ async function expectNoAxeViolations(page: Page) {
   expect(summary).toEqual([]);
 }
 
+async function expectBlankEditableComposer(page: Page) {
+  const visibleTextareas = await page.locator("textarea").evaluateAll((textareas) =>
+    textareas
+      .filter((textarea) => textarea.getClientRects().length > 0)
+      .map((textarea) => ({
+        value: (textarea as HTMLTextAreaElement).value,
+        disabled: (textarea as HTMLTextAreaElement).disabled,
+      })),
+  );
+  expect(visibleTextareas).toEqual([{ value: "", disabled: false }]);
+
+  const composer = page.getByRole("textbox", { name: "Message" });
+  await expect(composer).toHaveValue("");
+  await expect(composer).toBeEnabled();
+  await composer.fill("A different Meren question");
+  await expect(composer).toHaveValue("A different Meren question");
+}
+
+async function clickNewChat(page: Page, isMobile: boolean) {
+  const sidebar = isMobile ? page.getByRole("dialog", { name: "Chats" }) : page.locator("aside");
+  await sidebar.locator('a[href="/"]').filter({ hasText: "New chat" }).click();
+}
+
 test.describe("chat", () => {
   test.beforeEach(async ({ page }) => {
     await signIn(page);
@@ -30,6 +53,41 @@ test.describe("chat", () => {
     await answer.getByRole("button", { name: "Viscera Seer", exact: true }).first().click();
     await expect(page.getByRole("heading", { name: "Viscera Seer", level: 2 })).toBeVisible();
     await expect(page.getByText(/^Sacrifice a creature: Scry 1\./)).toBeVisible();
+  });
+
+  test("starts a fresh chat after an answer and can edit its composer", async ({
+    page,
+    isMobile,
+  }) => {
+    const composer = page.getByRole("textbox", { name: "Message" });
+    await composer.fill("What should I add to my Meren deck?");
+    await page.getByRole("button", { name: "Send" }).click();
+    await expect(page).toHaveURL(/\/chats\/[0-9a-f-]{36}$/);
+    await expect(
+      page
+        .getByRole("log", { name: "Messages" })
+        .getByRole("list", { name: "Cards in this answer" }),
+    ).toBeVisible({ timeout: 20_000 });
+
+    if (isMobile) await page.getByRole("button", { name: "Show chats" }).click();
+    await clickNewChat(page, isMobile);
+
+    await expect(page).toHaveURL("/");
+    await expectBlankEditableComposer(page);
+  });
+
+  test("starts a fresh chat while the previous answer is streaming", async ({ page, isMobile }) => {
+    const composer = page.getByRole("textbox", { name: "Message" });
+    await composer.fill("What should I add to my Meren deck?");
+    await page.getByRole("button", { name: "Send" }).click();
+    await expect(page).toHaveURL(/\/chats\/[0-9a-f-]{36}$/);
+    await expect(page.getByRole("button", { name: "Stop" })).toBeVisible();
+
+    if (isMobile) await page.getByRole("button", { name: "Show chats" }).click();
+    await clickNewChat(page, isMobile);
+
+    await expect(page).toHaveURL("/");
+    await expectBlankEditableComposer(page);
   });
 
   test("stops an answer and keeps what arrived", async ({ page }) => {
@@ -116,7 +174,7 @@ test.describe("accessibility", () => {
   test("new chat has no axe violations", async ({ page }) => {
     await signIn(page);
     await expect(
-      page.getByRole("heading", { name: "Ask about cards for your deck" }),
+      page.getByRole("heading", { name: "What is your deck trying to do?" }),
     ).toBeVisible();
     await expect(page.getByRole("note", { name: "About free model tiers" })).toBeVisible();
     await expectNoAxeViolations(page);

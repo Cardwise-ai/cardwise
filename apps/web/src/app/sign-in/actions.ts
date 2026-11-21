@@ -60,6 +60,45 @@ export async function signInWithPassword(
   redirect(next);
 }
 
+export async function signInWithGoogle(
+  _previous: SignInState,
+  formData: FormData,
+): Promise<SignInState> {
+  const email = readEmail(formData);
+  const next = safeNextPath(formData.get("next"));
+
+  if (isMocking) {
+    await startMockSession("google-reader@example.com");
+    redirect(next);
+  }
+
+  const origin = (await headers()).get("origin");
+  if (!origin)
+    return {
+      status: "error",
+      message: "Something went wrong. Reload the page and try again.",
+      email,
+    };
+
+  const callback = new URL("/auth/callback", origin);
+  callback.searchParams.set("next", next);
+  callback.searchParams.set("flow", "google");
+
+  const supabase = await createSupabaseServerClient();
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: "google",
+    options: { redirectTo: callback.toString() },
+  });
+  if (error || !data.url)
+    return {
+      status: "error",
+      message: "We couldn't start Google sign-in. Try again in a minute.",
+      email,
+    };
+
+  redirect(data.url);
+}
+
 export async function sendMagicLink(
   _previous: SignInState,
   formData: FormData,

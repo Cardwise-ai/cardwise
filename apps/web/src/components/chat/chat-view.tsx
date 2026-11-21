@@ -94,7 +94,7 @@ export function ChatView({ chatId }: { chatId: string }) {
       {title ? <title>{`${title} | Cardwise`}</title> : null}
       <ChatHeader title={title} actions={summary ? <ChatActions chat={summary} /> : null} />
       <div ref={scroller} className="min-h-0 flex-1 overflow-y-auto">
-        <div className="mx-auto w-full max-w-[72ch] px-4 pt-8 pb-10 md:px-6">
+        <div className="mx-auto w-full max-w-[74ch] px-5 pt-8 pb-12 md:px-8">
           {chat.history.status === "loading" ? <HistorySkeleton /> : null}
           {chat.history.status === "error" ? (
             notFound ? (
@@ -140,8 +140,8 @@ export function ChatView({ chatId }: { chatId: string }) {
         </div>
       </div>
       {notFound ? null : (
-        <div className="shrink-0 px-4 pb-4 md:px-6">
-          <div className="mx-auto w-full max-w-[72ch]">
+        <div className="shrink-0 border-t border-rule bg-surface px-4 pt-3 pb-4 md:px-6">
+          <div className="mx-auto w-full max-w-[74ch]">
             {sendError ? (
               <ErrorBanner className="mb-2">
                 <p>{sendError.message}</p>

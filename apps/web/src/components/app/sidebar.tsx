@@ -29,23 +29,27 @@ function ChatListBody() {
   }
   if (state === "error") {
     return (
-      <div className="px-4 pt-3 text-sm">
+      <div className="px-4 pt-3 text-sm text-white">
         <p>Couldn&apos;t load your chats.</p>
-        <Button size="sm" className="mt-2" onClick={reload}>
+        <Button
+          size="sm"
+          className="mt-2 border-white/30 bg-transparent text-white hover:bg-white/10"
+          onClick={reload}
+        >
           Try again
         </Button>
       </div>
     );
   }
   if (!chats.length) {
-    return <p className="px-4 pt-3 text-sm text-muted">Your chats will show up here.</p>;
+    return <p className="px-4 pt-3 text-sm text-white/70">Your chats will show up here.</p>;
   }
 
   return (
     <>
       {groupChats(chats).map((group) => (
         <section key={group.label} aria-labelledby={`group-${group.label}`} className="mb-4">
-          <h2 id={`group-${group.label}`} className="px-4 pb-1 text-sm text-muted">
+          <h2 id={`group-${group.label}`} className="px-4 pb-1 text-sm text-white/65">
             {group.label}
           </h2>
           <ul>
@@ -57,15 +61,15 @@ function ChatListBody() {
                   key={chat.id}
                   className={cx(
                     "group relative flex items-center border-l-2",
-                    active ? "border-accent bg-panel" : "border-transparent hover:bg-hover",
+                    active ? "border-brass bg-white/10" : "border-transparent hover:bg-white/10",
                   )}
                 >
                   <Link
                     href={href}
                     aria-current={active ? "page" : undefined}
                     className={cx(
-                      "block min-w-0 flex-1 truncate py-1.5 pr-1 pl-3.5 focus-visible:outline-offset-[-2px]",
-                      active ? "font-semibold" : "text-ink",
+                      "block min-w-0 flex-1 truncate py-1.5 pr-1 pl-3.5 text-white focus-visible:outline-offset-[-2px]",
+                      active ? "font-semibold" : "text-white/85",
                     )}
                   >
                     {chat.title}
@@ -73,7 +77,7 @@ function ChatListBody() {
                   <ChatActions
                     chat={chat}
                     className={cx(
-                      "mr-1.5 md:opacity-0 md:group-focus-within:opacity-100 md:group-hover:opacity-100 md:data-[state=open]:opacity-100",
+                      "mr-1.5 text-white/70 hover:bg-white/10 hover:text-white data-[state=open]:bg-white/10 data-[state=open]:text-white md:opacity-0 md:group-focus-within:opacity-100 md:group-hover:opacity-100 md:data-[state=open]:opacity-100",
                       active && "md:opacity-100",
                     )}
                   />
@@ -90,14 +94,17 @@ function ChatListBody() {
 /** Chat list: wordmark, new chat, chats grouped by date, and the account footer. */
 export function Sidebar({ email }: { email: string }) {
   return (
-    <div className="flex h-full min-h-0 flex-col bg-surface">
-      <div className="flex h-12 shrink-0 items-center px-4">
+    <div className="dark-field flex h-full min-h-0 flex-col bg-accent text-white">
+      <div className="flex h-14 shrink-0 items-center px-5">
         <Link href="/" className="rounded-control">
-          <Wordmark />
+          <Wordmark inverse />
         </Link>
       </div>
-      <div className="px-3 pt-1 pb-4">
-        <Button asChild className="w-full justify-start">
+      <div className="px-3 pb-5">
+        <Button
+          asChild
+          className="w-full justify-start border border-white/50 bg-panel text-accent hover:bg-white"
+        >
           <Link href="/">
             <Plus aria-hidden />
             New chat
@@ -107,12 +114,17 @@ export function Sidebar({ email }: { email: string }) {
       <nav aria-label="Chats" className="min-h-0 flex-1 overflow-y-auto pb-4">
         <ChatListBody />
       </nav>
-      <div className="flex shrink-0 items-center gap-2 border-t border-rule py-2.5 pr-2 pl-4">
-        <p className="min-w-0 flex-1 truncate text-sm text-muted" title={email}>
+      <div className="flex shrink-0 items-center gap-2 border-t border-white/20 py-3 pr-2 pl-4">
+        <p className="min-w-0 flex-1 truncate text-sm text-white/70" title={email}>
           {email}
         </p>
         <form action={signOut}>
-          <Button type="submit" variant="ghost" size="sm">
+          <Button
+            type="submit"
+            variant="ghost"
+            size="sm"
+            className="text-white hover:bg-white/10 hover:text-white"
+          >
             Sign out
           </Button>
         </form>

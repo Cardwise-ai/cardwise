@@ -60,7 +60,7 @@ export function Composer({
   const count = value.length;
   return (
     <form onSubmit={submit} className="w-full">
-      <div className="rounded-control border border-rule bg-panel transition-colors focus-within:border-accent hover:border-rule-strong focus-within:hover:border-accent">
+      <div className="rounded-control border border-rule border-l-[3px] border-l-accent bg-panel transition-colors focus-within:border-accent hover:border-rule-strong focus-within:hover:border-accent">
         <label htmlFor={id} className="sr-only">
           Message
         </label>
@@ -75,7 +75,7 @@ export function Composer({
           aria-describedby={`${id}-hint`}
           onChange={(event) => onChange(event.target.value)}
           onKeyDown={onKeyDown}
-          className="block max-h-[240px] min-h-[52px] w-full resize-none bg-transparent px-3.5 pt-3.5 pb-1 text-base placeholder:text-muted focus:outline-none disabled:text-muted"
+          className="block max-h-[240px] min-h-[56px] w-full resize-none bg-transparent px-4 pt-4 pb-1 text-base placeholder:text-muted focus:outline-none disabled:text-muted"
         />
         <div className="flex items-center justify-between gap-3 px-2 pb-2 pl-3.5">
           <p id={`${id}-hint`} className="truncate text-sm text-muted">

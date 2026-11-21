@@ -17,17 +17,21 @@ export function contrastRatio(a: string, b: string): number {
   return (hi + 0.05) / (lo + 0.05);
 }
 
-/** The palette from spec §8.2, plus the derived states used in components. */
+/** The Cardwise playmat-and-cardstock palette, plus the derived states used in components. */
 export const palette = {
-  surface: "#f3f4f1",
-  panel: "#ffffff",
-  ink: "#22262b",
-  muted: "#5d646c",
-  rule: "#d6d9d4",
-  accent: "#2f5d50",
-  "accent-strong": "#244a40",
-  "accent-wash": "#e7eeea",
-  hover: "#e9ebe6",
+  surface: "#e6ede5",
+  panel: "#fbfaf4",
+  ink: "#1b2a25",
+  muted: "#4e625a",
+  rule: "#c7d3c9",
+  "rule-strong": "#9cab9f",
+  accent: "#1d4b40",
+  "accent-strong": "#14382f",
+  "accent-wash": "#d9e7dd",
+  hover: "#dde7dd",
+  placeholder: "#e1e9e1",
+  brass: "#b18a3c",
+  river: "#36798a",
   danger: "#9c2f2a",
   "danger-wash": "#f8ecea",
 } as const;

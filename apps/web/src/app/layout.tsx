@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#f3f4f1",
+  themeColor: "#e6ede5",
 };
 
 // Every page renders per request so Next.js can stamp the CSP nonce from the proxy on its

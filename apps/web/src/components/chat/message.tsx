@@ -104,7 +104,7 @@ export const MessageItem = memo(function MessageItem({
     return (
       <article aria-label="You said" className="flex flex-col items-start">
         <h3 className="sr-only">You</h3>
-        <div className="max-w-full rounded-control border border-rule bg-surface px-4 py-2.5 whitespace-pre-wrap [overflow-wrap:anywhere]">
+        <div className="max-w-full border-l-2 border-accent bg-accent-wash px-4 py-3 whitespace-pre-wrap [overflow-wrap:anywhere]">
           {message.content}
         </div>
       </article>
@@ -114,7 +114,7 @@ export const MessageItem = memo(function MessageItem({
   const streaming = message.status === "streaming";
   return (
     <article aria-label="Cardwise answered" aria-busy={streaming || undefined}>
-      <h3 className="mb-1.5 text-sm font-semibold text-accent">Cardwise</h3>
+      <h3 className="mb-2 font-serif text-lg font-semibold text-accent">Cardwise</h3>
       {message.content ? (
         <Markdown
           text={message.content}

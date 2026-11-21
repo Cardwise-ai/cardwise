@@ -100,14 +100,14 @@ Supabase CLI 3.x pushes to the local Docker database unless `--remote` is given.
 
 ## 6. Sign-in
 
-Supabase Auth's email and password sign-in, invite-only, with no email sending. Supabase's built-in email delivers only to members of your Supabase org, at 2 emails an hour, and free SMTP providers need a domain you own. So the POC sends no email at all: you create each tester's account yourself and give them the password. GitHub or Google sign-in would also work, but each needs an OAuth app registered with that provider.
+Supabase Auth uses password sign-in and Google OAuth. Email sign-in links are still available, but Supabase's built-in email delivers only to members of your Supabase org, at 2 emails an hour, and free SMTP providers need a domain you own. The POC sends no email automatically: create each tester's account yourself. Google OAuth also needs a web client registered with Google and enabled in each Supabase project.
 
 In both projects:
 
 1. Authentication → Sign In / Providers:
    - **Allow new users to sign up: off.** Only accounts you create exist.
    - **Email** provider: on. **Confirm email: off**, so no confirmation email is sent.
-   - All other providers: off.
+   - **Google** provider: on after completing step 3 below. Other providers: off.
 2. Authentication → URL Configuration:
 
    | Field | Production | Development |
@@ -115,9 +115,20 @@ In both projects:
    | Site URL | the `cardwise-web` production URL (step 7) | `http://localhost:3000` |
    | Redirect URLs | `<web production URL>/**` | `http://localhost:3000/**` and `https://cardwise-web-*-<vercel-scope>.vercel.app/**` (previews) |
 
-3. Authentication → Users → **Add user → Create new user**: enter the email and a generated password, and tick **Auto Confirm User**. Do this for yourself in both projects and for each tester in production. Send passwords through a password manager share or Signal, not plain email. If someone forgets theirs, reset it on the same page.
+3. Configure Google sign-in once in Google Cloud, then enable it in **both** Supabase projects:
+   - In [Google Auth Platform](https://console.cloud.google.com/auth/overview), configure the consent-screen branding and audience. Add `openid`, `email`, and `profile` scopes. Add tester accounts to the audience if the app remains in testing.
+   - Create an OAuth client ID with application type **Web application**. Add the Cardwise production origin and `http://localhost:3000` under **Authorized JavaScript origins**; add each exact Vercel preview origin you intend to test.
+   - Under **Authorized redirect URIs**, add the Supabase callback shown on the Google provider page. It is normally `https://<project-ref>.supabase.co/auth/v1/callback` (use the value displayed by Supabase, not the web app callback). For local Supabase, the callback is `http://127.0.0.1:54321/auth/v1/callback`.
+   - In each Supabase project, open Authentication → Sign In / Providers → Google, enable the provider, and enter the Google **Client ID** and **Client Secret**. Supabase stores these; do not put the secret in the app, `.env`, or a `NEXT_PUBLIC_*` variable.
+   - In Supabase Authentication → URL Configuration, make sure the allowed redirect URLs cover the web app callback: `http://localhost:3000/auth/callback`, `<web production URL>/auth/callback`, and the preview callback pattern `https://cardwise-web-*-<vercel-scope>.vercel.app/auth/callback`.
+
+   The web app sends users through Supabase's PKCE callback at `/auth/callback`, exchanges the returned code for a session, and allows only same-site `next` paths. The current invite-only setting remains in force: keep **Allow new users to sign up** off unless you intend to let Google-authenticated visitors create accounts.
+
+4. Authentication → Users → **Add user → Create new user**: enter the email and a generated password, and tick **Auto Confirm User**. Do this for yourself in both projects and for each tester in production. Send passwords through a password manager share or Signal, not plain email. If someone forgets theirs, reset it on the same page.
 
 Password reset and email change by the user need email, so they wait for SMTP (after the POC, with a domain).
+
+Supabase and Google setup references: [Supabase Google sign-in](https://supabase.com/docs/guides/auth/social-sign-in/auth-google) and [Supabase redirect URLs](https://supabase.com/docs/guides/auth/redirect-urls).
 
 ## 7. Vercel: web project
 
