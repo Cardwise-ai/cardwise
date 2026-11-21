@@ -81,7 +81,7 @@ pnpm exec supabase login                                  # opens the browser on
 pnpm exec supabase db push --remote=<dev-ref> --password <dev-db-password>
 ```
 
-Supabase CLI 3.x pushes to the local Docker database unless `--remote` is given. `<dev-ref>` is in the dev project's URL: `https://supabase.com/dashboard/project/<dev-ref>`.
+Supabase CLI 3.x pushes to the local Docker database unless `--remote` is given. `<dev-ref>` is in the dev project's URL: `https://supabase.com/dashboard/project/<dev-ref>`. Once the `dev` environment has `CARDWISE_DATABASE_URL` (step 10), the `migrate-dev` workflow does this on every migration change.
 
 Then create the bucket by hand: Storage → New bucket → `raw-snapshots`, private, 50 MB file limit.
 
@@ -166,18 +166,20 @@ Not needed yet, because the API is still stubs. When it's time:
 
 ## 10. GitHub Actions secrets
 
-**None are needed now.** CI runs against a local Supabase in Docker with the fake model, and Supabase and Vercel deploy through their own GitHub apps.
+CI needs none: it runs against a local Supabase in Docker with the fake model. The `ingest` and `migrate-dev` workflows need a GitHub **Environment** per Supabase project. `dev` and `prod` exist already (repo → Settings → Environments); `prod` only accepts deployments from `main`. Add these secrets to **each** environment, with that project's values:
 
-When these workflows are built, create a GitHub **Environment** named `prod` (repo → Settings → Environments). Restrict it to the `main` branch, then add:
-
-| Secret | Workflow | Value |
+| Secret | Workflow | Where to get it |
 |---|---|---|
-| `CARDWISE_DATABASE_URL` | ingest, chat backups | prod **Session pooler** URL (port 5432). GitHub runners can't reach the IPv6-only direct connection, and the transaction pooler breaks long loads. |
-| `CARDWISE_STORAGE_S3_ENDPOINT` | ingest | Supabase → Project Settings → Storage → S3 connection endpoint |
-| `CARDWISE_STORAGE_S3_REGION` | ingest | same page |
-| `CARDWISE_STORAGE_S3_ACCESS_KEY_ID` / `CARDWISE_STORAGE_S3_SECRET_ACCESS_KEY` | ingest | same page → **New access key**. These keys reach Storage only. |
-| `CARDWISE_BACKUP_AGE_RECIPIENT` | chat backups | the public key from `age-keygen -o cardwise-backup.key`. Keep `cardwise-backup.key` offline, never in GitHub. |
-| `CARDWISE_GEMINI_API_KEY` / `CARDWISE_OPENROUTER_API_KEY` | live evals | dev keys |
+| `CARDWISE_DATABASE_URL` | ingest, migrate-dev (dev only), chat backups | Supabase → **Connect** → Connection string → **Session pooler** (port 5432), with the database password filled in. It looks like `postgresql://postgres.<ref>:<password>@aws-0-<region>.pooler.supabase.com:5432/postgres`. GitHub runners can't reach the IPv6-only direct connection, and the transaction pooler breaks the session lock ingest takes. |
+| `CARDWISE_STORAGE_S3_ENDPOINT` | ingest | Project Settings → Storage → **S3 Connection** → Endpoint (`https://<ref>.storage.supabase.co/storage/v1/s3`) |
+| `CARDWISE_STORAGE_S3_REGION` | ingest | same section → Region |
+| `CARDWISE_STORAGE_S3_ACCESS_KEY_ID` / `CARDWISE_STORAGE_S3_SECRET_ACCESS_KEY` | ingest | same page → **S3 Access Keys** → New access key. The secret is shown once. These keys can read and write every bucket in the project but nothing else. |
+| `CARDWISE_BACKUP_AGE_RECIPIENT` | chat backups (later) | the public key from `age-keygen -o cardwise-backup.key`. Keep `cardwise-backup.key` offline, never in GitHub. |
+| `CARDWISE_GEMINI_API_KEY` / `CARDWISE_OPENROUTER_API_KEY` | live evals (later) | dev keys |
+
+The S3 secrets are optional: without them ingest still loads the database and logs that the raw files were not archived.
+
+`ingest` runs every Monday into dev, then prod. Run it by hand from Actions → ingest → **Run workflow**, choosing the environment. A run on unchanged files does nothing. If the card count moves more than 5%, the run fails and the live corpus stays; check the data, then rerun with **allow count drift**. `migrate-dev` applies new migrations to dev whenever `supabase/migrations` changes on `main`.
 
 Dependabot PRs can't read secrets, so jobs that use them run only on `main` or by hand.
 
