@@ -73,6 +73,23 @@ describe("useChat", () => {
     });
   });
 
+  it("keeps what arrived and marks the answer failed when the stream is cut off", async () => {
+    const { result } = await readyChat();
+    await act(() => result.current.send("Ramp for Esika, then drop the connection"));
+    const answer = result.current.messages.at(-1)!;
+    expect(answer).toMatchObject({ status: "failed", errorCode: "network" });
+    expect(answer.content.length).toBeGreaterThan(0);
+  });
+
+  it.each([
+    ["is answering in another tab", /still answering another message/],
+    ["is not configured yet", /^Answers aren't switched on/],
+  ])("explains a refused message that %s", async (content, message) => {
+    const { result } = await readyChat();
+    await act(() => result.current.send(content));
+    expect(result.current.sendError?.message).toMatch(message);
+  });
+
   it("keeps the partial answer as interrupted when stopped", async () => {
     mockTiming.chunkDelayMs = 5;
     try {

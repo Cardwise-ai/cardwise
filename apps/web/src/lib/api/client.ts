@@ -18,14 +18,42 @@ export interface ApiClientOptions {
   baseUrl: string;
   /** Returns the Supabase access token, or null when signed out. */
   getAccessToken: () => Promise<string | null>;
+  /** Forces a token refresh after a 401. Returns the new token, or null when that isn't possible. */
+  refreshAccessToken?: () => Promise<string | null>;
+  /** Called when a request is still unauthorized after any refresh: the session has ended. */
+  onUnauthorized?: () => void;
 }
 
-export function createApiClient({ baseUrl, getAccessToken }: ApiClientOptions): ApiClient {
-  const client = createClient<paths>({
-    baseUrl,
-    // Resolve fetch per call so test interceptors installed later still apply.
-    fetch: (request) => globalThis.fetch(request),
-  });
+export function createApiClient({
+  baseUrl,
+  getAccessToken,
+  refreshAccessToken,
+  onUnauthorized,
+}: ApiClientOptions): ApiClient {
+  // Resolve fetch per call so test interceptors installed later still apply.
+  async function send(request: Request): Promise<Response> {
+    // A token can expire between reading it and the API checking it, so a 401 gets one retry
+    // with a freshly refreshed token before the session counts as ended.
+    const retry =
+      refreshAccessToken && request.headers.has("Authorization") ? request.clone() : null;
+    const response = await globalThis.fetch(request);
+    if (response.status !== 401) return response;
+    if (retry && refreshAccessToken) {
+      const token = await refreshAccessToken().catch(() => null);
+      if (token) {
+        const headers = new Headers(retry.headers);
+        headers.set("Authorization", `Bearer ${token}`);
+        const second = await globalThis.fetch(new Request(retry, { headers }));
+        if (second.status !== 401) return second;
+        onUnauthorized?.();
+        return second;
+      }
+    }
+    onUnauthorized?.();
+    return response;
+  }
+
+  const client = createClient<paths>({ baseUrl, fetch: send });
   const auth: Middleware = {
     async onRequest({ request }) {
       const token = await getAccessToken();

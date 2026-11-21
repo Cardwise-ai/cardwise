@@ -9,7 +9,7 @@ import type { Message } from "@/lib/api/client";
 import { MOCK_ACCESS_TOKEN } from "@/lib/auth/shared";
 import { apiUrl } from "@/lib/env";
 import type { StreamEvent } from "@/lib/stream/events";
-import { db, mockCards, pickAnswer } from "./db";
+import { db, EXPIRED_SESSION_CHAT_ID, mockCards, pickAnswer } from "./db";
 
 /** Milliseconds between streamed chunks. Tests set it to 0. */
 export const mockTiming = { chunkDelayMs: 28 };
@@ -125,6 +125,14 @@ export const handlers = [
     }),
   ),
 
+  http.get<{ chatId: string }>(
+    url("/v1/chats/:chatId"),
+    withAuth(({ params }) => {
+      const chat = db.getChatSummary(params.chatId);
+      return chat ? HttpResponse.json(chat) : errorBody(404, "not_found", "Chat not found.");
+    }),
+  ),
+
   http.patch<{ chatId: string }>(
     url("/v1/chats/:chatId"),
     withAuth(async ({ request, params }) => {
@@ -150,6 +158,9 @@ export const handlers = [
   http.get<{ chatId: string }>(
     url("/v1/chats/:chatId/messages"),
     withAuth(({ params }) => {
+      if (params.chatId === EXPIRED_SESSION_CHAT_ID) {
+        return errorBody(401, "unauthorized", "Sign in to continue.");
+      }
       const chat = db.getChat(params.chatId);
       if (!chat) return errorBody(404, "not_found", "Chat not found.");
       return HttpResponse.json({ items: chat.messages, next_cursor: null });
@@ -168,9 +179,17 @@ export const handlers = [
       }
       // Keywords that exercise the error paths in development.
       if (/rate limit/i.test(content)) {
-        return errorBody(429, "rate_limited", "Too many messages this hour.", {
+        return errorBody(429, "rate_limited", "Too many requests. Try again later.", {
           "Retry-After": "1260",
         });
+      }
+      if (/another tab/i.test(content)) {
+        return errorBody(429, "rate_limited", "Too many requests. Try again later.", {
+          "Retry-After": "5",
+        });
+      }
+      if (/not configured/i.test(content)) {
+        return errorBody(501, "not_implemented", "Not available yet.");
       }
 
       db.addMessage(chat.id, {
@@ -184,6 +203,7 @@ export const handlers = [
 
       const reply = pickAnswer(content);
       const failMidway = /model error/i.test(content);
+      const dropMidway = /drop the connection/i.test(content);
       const assistant: Message = {
         id: crypto.randomUUID(),
         role: "assistant",
@@ -211,6 +231,11 @@ export const handlers = [
             if (failMidway && index === Math.floor(pieces.length / 3)) {
               save("failed");
               await emit({ type: "error", code: "model_unavailable", request_id: requestId() });
+              return;
+            }
+            if (dropMidway && index === Math.floor(pieces.length / 3)) {
+              // Ends the body without `done`, like a proxy cutting the connection.
+              save("interrupted");
               return;
             }
             assistant.content += text;

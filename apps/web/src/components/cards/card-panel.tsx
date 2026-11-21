@@ -3,7 +3,13 @@
 import { ExternalLink, X } from "lucide-react";
 import { type ReactNode, useCallback, useEffect, useId, useRef, useState } from "react";
 import { getApiClient } from "@/lib/api/browser";
-import type { CardDetail, CardFace, CardRef, Color } from "@/lib/api/client";
+import {
+  ApiError,
+  type CardDetail,
+  type CardFace,
+  type CardRef,
+  type Color,
+} from "@/lib/api/client";
 import { getCard } from "@/lib/api/endpoints";
 import { cx } from "@/lib/cx";
 import { describeError } from "@/lib/errors";
@@ -17,7 +23,7 @@ import { ManaCost, ManaSymbol, OracleText } from "./mana";
 type DetailState =
   | { status: "loading" }
   | { status: "ready"; card: CardDetail }
-  | { status: "error"; message: string };
+  | { status: "error"; message: string; retryable: boolean };
 
 const cache = new Map<string, CardDetail>();
 
@@ -41,7 +47,12 @@ function useCardDetail(oracleId: string): { state: DetailState; retry: () => voi
       },
       (error: unknown) => {
         if (controller.signal.aborted) return;
-        setState({ status: "error", message: describeError(error), id: oracleId });
+        setState({
+          status: "error",
+          message: describeError(error, "card"),
+          retryable: !(error instanceof ApiError && error.code === "not_found"),
+          id: oracleId,
+        });
       },
     );
     return () => controller.abort();
@@ -389,9 +400,11 @@ export function CardPanel({ card, onClose, variant }: CardPanelProps) {
         ) : state.status === "error" ? (
           <ErrorBanner
             action={
-              <Button size="sm" onClick={retry}>
-                Try again
-              </Button>
+              state.retryable ? (
+                <Button size="sm" onClick={retry}>
+                  Try again
+                </Button>
+              ) : null
             }
           >
             <p className="font-semibold">Couldn&apos;t load {card.name}.</p>

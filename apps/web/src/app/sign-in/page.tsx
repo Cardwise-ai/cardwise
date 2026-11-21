@@ -9,6 +9,7 @@ export const instant = false;
 
 const notices: Record<string, string> = {
   link: "That sign-in link has expired or was already used. Request a new one.",
+  session: "Your session has ended. Sign in again to continue.",
 };
 
 export default async function SignInPage({ searchParams }: PageProps<"/sign-in">) {
