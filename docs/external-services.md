@@ -6,22 +6,22 @@ Secrets go straight from a dashboard into Vercel, GitHub or your local `.env`. T
 
 ## How the pieces connect
 
-| Service | Plan | Connected to the repo by | Deploys |
-|---|---|---|---|
-| Supabase `cardwise-prod` | Free | Supabase GitHub integration | Migrations and storage buckets on every push to `main` |
-| Supabase `cardwise-dev` | Free | Supabase GitHub integration | Migrations and storage buckets on every push to `dev` |
-| Vercel `cardwise-web` | Hobby | Vercel GitHub app | Web app: production from `main` (prod database), a preview for every other branch and PR (dev database) |
-| Vercel `cardwise-api` | Hobby | Vercel GitHub app | API, once the endpoints exist (Line C) |
-| Google AI Studio | Free tier | API key in Vercel | n/a |
-| OpenRouter | Free models | API key in Vercel | n/a |
-| GitHub Actions | Free | This repo | CI now; ingest, backups and live evals later |
+| Service                  | Plan        | Connected to the repo by    | Deploys                                                                                                 |
+| ------------------------ | ----------- | --------------------------- | ------------------------------------------------------------------------------------------------------- |
+| Supabase `cardwise-prod` | Free        | Supabase GitHub integration | Migrations and storage buckets on every push to `main`                                                  |
+| Supabase `cardwise-dev`  | Free        | Supabase GitHub integration | Migrations and storage buckets on every push to `dev`                                                   |
+| Vercel `cardwise-web`    | Hobby       | Vercel GitHub app           | Web app: production from `main` (prod database), a preview for every other branch and PR (dev database) |
+| Vercel `cardwise-api`    | Hobby       | Vercel GitHub app           | API, once the endpoints exist (Line C)                                                                  |
+| Google AI Studio         | Free tier   | API key in Vercel           | n/a                                                                                                     |
+| OpenRouter               | Free models | API key in Vercel           | n/a                                                                                                     |
+| GitHub Actions           | Free        | This repo                   | CI now; ingest, backups and live evals later                                                            |
 
 **Branches:** feature branches merge into `dev` (squash), which deploys to `cardwise-dev`. A release is a PR from `dev` into `main` (merge commit, so the two branches keep one history), which deploys to `cardwise-prod`. Every migration therefore runs on the hosted dev database before prod. A hotfix merged straight to `main` must be merged back into `dev`.
 
-| Branch | Supabase | Vercel | GitHub environment | Merge method |
-|---|---|---|---|---|
-| `dev` (default) | `cardwise-dev` | Preview | `dev` | squash |
-| `main` | `cardwise-prod` | Production | `prod` | merge commit |
+| Branch          | Supabase        | Vercel     | GitHub environment | Merge method |
+| --------------- | --------------- | ---------- | ------------------ | ------------ |
+| `dev` (default) | `cardwise-dev`  | Preview    | `dev`              | squash       |
+| `main`          | `cardwise-prod` | Production | `prod`             | merge commit |
 
 Both branches are protected by repo rulesets: changes only through PRs with green CI (`python`, `db`, `web`, `secrets`, `audit`), no force pushes, no deletion.
 
@@ -47,14 +47,14 @@ The repo is public, so GitHub Free enforces rulesets. Settings → Rules → Rul
 1. supabase.com/dashboard → New organization: name `Cardwise`, plan **Free**.
 2. New project, twice:
 
-   | Field | Production | Development |
-   |---|---|---|
-   | Name | `cardwise-prod` | `cardwise-dev` |
-   | Region | East US (North Virginia) | the same |
-   | Database password | Generate. Save it in a password manager. | Generate a different one. |
-   | Enable Data API | On (only `public` is exposed, and we use no tables there) | On |
-   | Automatically expose new tables | **Off** | **Off** |
-   | Enable automatic RLS | **On** | **On** |
+   | Field                           | Production                                                | Development               |
+   | ------------------------------- | --------------------------------------------------------- | ------------------------- |
+   | Name                            | `cardwise-prod`                                           | `cardwise-dev`            |
+   | Region                          | East US (North Virginia)                                  | the same                  |
+   | Database password               | Generate. Save it in a password manager.                  | Generate a different one. |
+   | Enable Data API                 | On (only `public` is exposed, and we use no tables there) | On                        |
+   | Automatically expose new tables | **Off**                                                   | **Off**                   |
+   | Enable automatic RLS            | **On**                                                    | **On**                    |
 
    Why East US: Vercel functions run in Washington DC (`iad1`) by default, and the database should sit next to the API. It also keeps API traffic out of the EEA, UK and Switzerland, where the Gemini free tier isn't offered.
 
@@ -66,13 +66,13 @@ The repo is public, so GitHub Free enforces rulesets. Settings → Rules → Rul
 2. When GitHub asks where to install the Supabase app, choose the **Cardwise-ai** organization and **Only select repositories → cardwise**.
 3. Back in Supabase, fill in:
 
-   | Option | Value |
-   |---|---|
-   | Repository | `Cardwise-ai/cardwise` |
-   | Working directory | `.` |
-   | Production branch | `main` |
-   | Deploy to production | **On** |
-   | Automatic branching | Off (preview branches are paid) |
+   | Option               | Value                           |
+   | -------------------- | ------------------------------- |
+   | Repository           | `Cardwise-ai/cardwise`          |
+   | Working directory    | `.`                             |
+   | Production branch    | `main`                          |
+   | Deploy to production | **On**                          |
+   | Automatic branching  | Off (preview branches are paid) |
 
 4. **Enable integration.** The next push to `main` applies `supabase/migrations/*` and creates the `raw-snapshots` bucket.
 5. Check it: Database → Migrations lists `20261121120000_init`; Table Editor → schema `corpus` has the tables; Storage lists `raw-snapshots` as private.
@@ -83,8 +83,8 @@ The repo is public, so GitHub Free enforces rulesets. Settings → Rules → Rul
 
 Same as step 4, in `cardwise-dev` → Project Settings → Integrations → GitHub Integration. The Supabase app is already installed on the repo, so GitHub won't ask again. Use the same options except:
 
-| Option | Value |
-|---|---|
+| Option            | Value |
+| ----------------- | ----- |
 | Production branch | `dev` |
 
 The next push to `dev` applies any migration `cardwise-dev` hasn't seen and creates `raw-snapshots`. Check it the same way as step 4.
@@ -110,17 +110,19 @@ In both projects:
    - **Google** provider: on after completing step 3 below. Other providers: off.
 2. Authentication → URL Configuration:
 
-   | Field | Production | Development |
-   |---|---|---|
-   | Site URL | the `cardwise-web` production URL (step 7) | `http://localhost:3000` |
-   | Redirect URLs | `<web production URL>/**` | `http://localhost:3000/**` and `https://cardwise-web-*-<vercel-scope>.vercel.app/**` (previews) |
+   | Field         | Production                                 | Development                                                                                                                                                                                         |
+   | ------------- | ------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+   | Site URL      | the `cardwise-web` production URL (step 7) | `http://localhost:3000`                                                                                                                                                                             |
+   | Redirect URLs | `<web production URL>/**`                  | `http://localhost:3000/**`, `http://127.0.0.1:3000/**`, `https://cardwise-web-*-<vercel-scope>.vercel.app/**` (branch URLs) and `https://cardwise-*-<vercel-scope>.vercel.app/**` (deployment URLs) |
+
+   Supabase silently replaces a redirect it does not allow with the Site URL, so a missing entry looks like "signed in on localhost" rather than an error. The web app sends sign-in callbacks to one origin: `NEXT_PUBLIC_SITE_URL` when set, else the Vercel branch URL on Previews (`cardwise-web-git-<branch>-<vercel-scope>.vercel.app`), else the page's own origin. A visitor on a per-deployment URL is first moved to the sign-in page on that origin, because the PKCE verifier cookie lives on the host that starts sign-in. For the current dev project the entries are `https://cardwise-web-*-yhaliwaizman.vercel.app/**` and `https://cardwise-*-yhaliwaizman.vercel.app/**`.
 
 3. Configure Google sign-in once in Google Cloud, then enable it in **both** Supabase projects:
    - In [Google Auth Platform](https://console.cloud.google.com/auth/overview), configure the consent-screen branding and audience. Add `openid`, `email`, and `profile` scopes. Add tester accounts to the audience if the app remains in testing.
    - Create an OAuth client ID with application type **Web application**. Add the Cardwise production origin and `http://localhost:3000` under **Authorized JavaScript origins**; add each exact Vercel preview origin you intend to test.
    - Under **Authorized redirect URIs**, add the Supabase callback shown on the Google provider page. It is normally `https://<project-ref>.supabase.co/auth/v1/callback` (use the value displayed by Supabase, not the web app callback). For local Supabase, the callback is `http://127.0.0.1:54321/auth/v1/callback`.
    - In each Supabase project, open Authentication → Sign In / Providers → Google, enable the provider, and enter the Google **Client ID** and **Client Secret**. Supabase stores these; do not put the secret in the app, `.env`, or a `NEXT_PUBLIC_*` variable.
-   - In Supabase Authentication → URL Configuration, make sure the allowed redirect URLs cover the web app callback: `http://localhost:3000/auth/callback`, `<web production URL>/auth/callback`, and the preview callback pattern `https://cardwise-web-*-<vercel-scope>.vercel.app/auth/callback`.
+   - In Supabase Authentication → URL Configuration, make sure the allowed redirect URLs cover the web app callback: `http://localhost:3000/auth/callback`, `<web production URL>/auth/callback`, and the preview patterns from step 2.
 
    The web app sends users through Supabase's PKCE callback at `/auth/callback`, exchanges the returned code for a session, and allows only same-site `next` paths. The current invite-only setting remains in force: keep **Allow new users to sign up** off unless you intend to let Google-authenticated visitors create accounts.
 
@@ -135,11 +137,11 @@ Supabase and Google setup references: [Supabase Google sign-in](https://supabase
 1. vercel.com/new → **Import Git Repository** → Install the Vercel app on **Cardwise-ai**, **Only select repositories → cardwise** → Import `cardwise`.
 2. Configure:
 
-   | Setting | Value |
-   |---|---|
-   | Project name | `cardwise-web` |
-   | Framework preset | Next.js |
-   | Root directory | `apps/web` |
+   | Setting                    | Value                                            |
+   | -------------------------- | ------------------------------------------------ |
+   | Project name               | `cardwise-web`                                   |
+   | Framework preset           | Next.js                                          |
+   | Root directory             | `apps/web`                                       |
    | Build and install commands | defaults (Vercel detects pnpm from the lockfile) |
 
 3. Deploy. The placeholder page should load at the production URL.
@@ -148,12 +150,13 @@ Supabase and Google setup references: [Supabase Google sign-in](https://supabase
    - Deployment Protection → Vercel Authentication: **Standard Protection**, so previews need a Vercel login.
    - Environment Variables (add them now; the web app reads them from Line E on). The setup script sets the first two with `vercel env add --project cardwise-web --scope <scope> --force`:
 
-   | Name | Production | Preview and Development |
-   |---|---|---|
-   | `NEXT_PUBLIC_SUPABASE_URL` | `https://<prod-ref>.supabase.co` | `https://<dev-ref>.supabase.co` |
-   | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | prod publishable key | dev publishable key |
-   | `NEXT_PUBLIC_API_URL` | `cardwise-api` production URL (after step 8) | `cardwise-api` preview URL, or `http://127.0.0.1:8000` |
-   | `NEXT_PUBLIC_LLM_TIER` | `free` (`paid` hides the free-tier notice) | `free` |
+   | Name                            | Production                                                                                                 | Preview and Development                                |
+   | ------------------------------- | ---------------------------------------------------------------------------------------------------------- | ------------------------------------------------------ |
+   | `NEXT_PUBLIC_SUPABASE_URL`      | `https://<prod-ref>.supabase.co`                                                                           | `https://<dev-ref>.supabase.co`                        |
+   | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | prod publishable key                                                                                       | dev publishable key                                    |
+   | `NEXT_PUBLIC_API_URL`           | `cardwise-api` production URL (after step 8)                                                               | `cardwise-api` preview URL, or `http://127.0.0.1:8000` |
+   | `NEXT_PUBLIC_LLM_TIER`          | `free` (`paid` hides the free-tier notice)                                                                 | `free`                                                 |
+   | `NEXT_PUBLIC_SITE_URL`          | optional: the production URL users visit (sign-in callbacks return there; otherwise the page's own origin) | unset: the branch URL is used                          |
 
    The publishable key is under Supabase → Project Settings → API Keys (`sb_publishable_...`). It is public by design. The secret key (`sb_secret_...`, formerly `service_role`) is never used anywhere.
 
@@ -162,6 +165,7 @@ Supabase and Google setup references: [Supabase Google sign-in](https://supabase
 The API is deployed to Vercel for dev. Production is intentionally not configured or deployed until S2 passes.
 
 Current dev setup:
+
 - Vercel project `cardwise-api` is connected to `Cardwise-ai/cardwise`, with framework **FastAPI**, root directory `api`, source files outside the root enabled, and production branch `main`.
 - The Preview deployment is available at `https://cardwise-api-git-dev-yhaliwaizman.vercel.app`; its `/healthz` returns `{"status":"ok"}` and unauthenticated `GET /v1/chats` returns 401.
 - Preview uses the dev Supabase project and transaction pooler, dev model keys, and a CORS regex for web preview origins. `cardwise-web` Preview uses this API URL.
@@ -169,6 +173,7 @@ Current dev setup:
 - Both Supabase JWKS endpoints currently advertise ES256 signing keys.
 
 What's in the repo:
+
 - `api/index.py` re-exports `cardwise_api.main:app`; `[tool.vercel] entrypoint = "index:app"` in `api/pyproject.toml` points Vercel at it.
 - `api/vercel.json` pins the region to `iad1`, lets the function run 300 s (a long answer stream) and leaves tests out of the bundle.
 
@@ -180,16 +185,19 @@ Steps:
 4. Do not enable Vercel Authentication for this API project: it blocks browser requests from the web app. Function region is set by `vercel.json`; API authorization is enforced with Supabase JWTs.
 5. Environment variables, all **sensitive**:
 
-   | Name | Production | Preview |
-   |---|---|---|
-   | `CARDWISE_DATABASE_URL` | prod **Transaction pooler** URL (port 6543) | dev Transaction pooler URL |
-   | `CARDWISE_SUPABASE_URL` | `https://<prod-ref>.supabase.co` | `https://<dev-ref>.supabase.co` |
-   | `CARDWISE_WEB_ORIGIN` | web production URL, e.g. `https://cardwise-web.vercel.app` (comma-separate several) | web preview branch URL(s), or leave unset and use the regex below |
-   | `CARDWISE_WEB_ORIGIN_REGEX` | unset | `^https://cardwise-web-[a-z0-9-]+-<team-slug>\.vercel\.app$` |
-   | `CARDWISE_GEMINI_API_KEY` | prod key | dev key |
-   | `CARDWISE_OPENROUTER_API_KEY` | prod key | dev key |
+   | Name                          | Production                                                                          | Preview                                                                               |
+   | ----------------------------- | ----------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+   | `CARDWISE_DATABASE_URL`       | prod **Transaction pooler** URL (port 6543)                                         | dev Transaction pooler URL                                                            |
+   | `CARDWISE_SUPABASE_URL`       | `https://<prod-ref>.supabase.co`                                                    | `https://<dev-ref>.supabase.co`                                                       |
+   | `CARDWISE_WEB_ORIGIN`         | web production URL, e.g. `https://cardwise-web.vercel.app` (comma-separate several) | web preview branch URL(s), or leave unset and use the regex below                     |
+   | `CARDWISE_WEB_ORIGIN_REGEX`   | unset                                                                               | `^https://cardwise-(web-)?[a-z0-9-]+-<team-slug>\.vercel\.app$` (dev: `yhaliwaizman`) |
+   | `CARDWISE_GEMINI_API_KEY`     | prod key                                                                            | dev key                                                                               |
+   | `CARDWISE_OPENROUTER_API_KEY` | prod key                                                                            | dev key                                                                               |
+
+   The regex must match both branch URLs (`cardwise-web-git-<branch>-<team-slug>`) and per-deployment URLs (`cardwise-<hash>-<team-slug>`); a `cardwise-web-`-only pattern rejects the latter, so every API call from a deployment URL fails CORS.
 
    The pooler URL is under Supabase → **Connect** → Transaction pooler; put the database password into it. Use port **6543**: the API opens one connection per request and never prepares named statements, which is what the transaction pooler needs (ADR 0007). `VERCEL_ENV` tells the app it is deployed: it then refuses to start without `CARDWISE_DATABASE_URL` and an https `CARDWISE_SUPABASE_URL`, sends HSTS and hides `/openapi.json`. Optional tuning: `CARDWISE_LOG_LEVEL`, `CARDWISE_MESSAGES_PER_HOUR` (default 20), `CARDWISE_CONCURRENT_STREAMS` (default 1).
+
 6. Deploy a Preview, then check `https://<api-url>/healthz` returns `{"status":"ok"}` and `GET /v1/chats` without a token returns 401 with the JSON error shape. The dev Preview currently passes both checks.
 7. Set `NEXT_PUBLIC_API_URL` on `cardwise-web` Preview to the API Preview URL. The dev Preview currently uses `https://cardwise-api-git-dev-yhaliwaizman.vercel.app`; do not set the production web value until S2 passes.
 
@@ -198,12 +206,14 @@ If the build can't install the workspace packages, fall back to a pinned require
 ## 9. Model providers
 
 **Google AI Studio (Gemini, primary)**
+
 1. aistudio.google.com/apikey → **Create API key** → in a new Google Cloud project named `cardwise`.
 2. Do not enable billing on that project. A project with billing on is charged at paid rates.
 3. Make one key per environment (`cardwise-prod`, `cardwise-dev`) so you can revoke one without the other.
 4. The free tier may use prompts for training and human review. That's acceptable only because of ADR 0004: prompts contain chat text and public card data, nothing else.
 
 **OpenRouter (fallback)**
+
 1. openrouter.ai/settings/keys → **Create key**, one per environment, with credit limit **0**.
 2. Don't buy credits. Free models then allow 20 requests a minute and 50 a day per account.
 3. Settings → Privacy: allow providers that may train on prompts. Most `:free` models require it, and ADR 0004 covers it.
@@ -212,14 +222,14 @@ If the build can't install the workspace packages, fall back to a pinned require
 
 CI needs none: it runs against a local Supabase in Docker with the fake model. The `ingest` workflow needs a GitHub **Environment** per Supabase project. `dev` and `prod` exist already (repo → Settings → Environments); `dev` only accepts runs from the `dev` branch and `prod` only from `main`. `scripts/sync_env.py` (below) fills them in for you. By hand, add these secrets to **each** environment, with that project's values:
 
-| Secret | Workflow | Where to get it |
-|---|---|---|
-| `CARDWISE_DATABASE_URL` | ingest, chat backups | Supabase → **Connect** → Connection string → **Session pooler** (port 5432), with the database password filled in. It looks like `postgresql://postgres.<ref>:<password>@aws-0-<region>.pooler.supabase.com:5432/postgres`. GitHub runners can't reach the IPv6-only direct connection, and the transaction pooler breaks the session lock ingest takes. |
-| `CARDWISE_STORAGE_S3_ENDPOINT` | ingest | Project Settings → Storage → **S3 Connection** → Endpoint (`https://<ref>.storage.supabase.co/storage/v1/s3`) |
-| `CARDWISE_STORAGE_S3_REGION` | ingest | same section → Region |
-| `CARDWISE_STORAGE_S3_ACCESS_KEY_ID` / `CARDWISE_STORAGE_S3_SECRET_ACCESS_KEY` | ingest | same page → **S3 Access Keys** → New access key. The secret is shown once. These keys can read and write every bucket in the project but nothing else. |
-| `CARDWISE_BACKUP_AGE_RECIPIENT` | chat backups (later) | the public key from `age-keygen -o cardwise-backup.key`. Keep `cardwise-backup.key` offline, never in GitHub. |
-| `CARDWISE_GEMINI_API_KEY` / `CARDWISE_OPENROUTER_API_KEY` | live evals (later) | dev keys |
+| Secret                                                                        | Workflow             | Where to get it                                                                                                                                                                                                                                                                                                                                          |
+| ----------------------------------------------------------------------------- | -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `CARDWISE_DATABASE_URL`                                                       | ingest, chat backups | Supabase → **Connect** → Connection string → **Session pooler** (port 5432), with the database password filled in. It looks like `postgresql://postgres.<ref>:<password>@aws-0-<region>.pooler.supabase.com:5432/postgres`. GitHub runners can't reach the IPv6-only direct connection, and the transaction pooler breaks the session lock ingest takes. |
+| `CARDWISE_STORAGE_S3_ENDPOINT`                                                | ingest               | Project Settings → Storage → **S3 Connection** → Endpoint (`https://<ref>.storage.supabase.co/storage/v1/s3`)                                                                                                                                                                                                                                            |
+| `CARDWISE_STORAGE_S3_REGION`                                                  | ingest               | same section → Region                                                                                                                                                                                                                                                                                                                                    |
+| `CARDWISE_STORAGE_S3_ACCESS_KEY_ID` / `CARDWISE_STORAGE_S3_SECRET_ACCESS_KEY` | ingest               | same page → **S3 Access Keys** → New access key. The secret is shown once. These keys can read and write every bucket in the project but nothing else.                                                                                                                                                                                                   |
+| `CARDWISE_BACKUP_AGE_RECIPIENT`                                               | chat backups (later) | the public key from `age-keygen -o cardwise-backup.key`. Keep `cardwise-backup.key` offline, never in GitHub.                                                                                                                                                                                                                                            |
+| `CARDWISE_GEMINI_API_KEY` / `CARDWISE_OPENROUTER_API_KEY`                     | live evals (later)   | dev keys                                                                                                                                                                                                                                                                                                                                                 |
 
 The S3 secrets are optional: without them ingest still loads the database and logs that the raw files were not archived.
 

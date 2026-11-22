@@ -46,7 +46,9 @@ class Settings(BaseSettings):
     web_origin: Annotated[tuple[str, ...], NoDecode] = ("http://localhost:3000",)
     """Comma-separated browser origins allowed by CORS, e.g. the web production URL."""
     web_origin_regex: str | None = None
-    """Optional regex for Vercel preview origins, e.g. ^https://cardwise-web-[a-z0-9-]+\\.vercel\\.app$."""
+    """Optional regex for Vercel preview origins. Branch URLs are cardwise-web-git-<branch>-<scope>,
+    deployment URLs cardwise-<hash>-<scope>, so the regex must allow both, e.g.
+    ^https://cardwise-(web-)?[a-z0-9-]+-yhaliwaizman\\.vercel\\.app$."""
 
     messages_per_hour: Annotated[int, Field(ge=1)] = 20
     concurrent_streams: Annotated[int, Field(ge=1)] = 1
