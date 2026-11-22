@@ -55,6 +55,18 @@ test.describe("chat", () => {
     await expect(page.getByText(/^Sacrifice a creature: Scry 1\./)).toBeVisible();
   });
 
+  test("names a new chat after its first message", async ({ page, isMobile }) => {
+    await page.getByRole("textbox", { name: "Message" }).fill("Ramp for my Esika deck?");
+    await page.getByRole("button", { name: "Send" }).click();
+    await expect(page).toHaveURL(/\/chats\/[0-9a-f-]{36}$/);
+    await expect(
+      page.getByRole("heading", { level: 1, name: "Ramp for my Esika deck?" }),
+    ).toBeVisible();
+
+    if (isMobile) await page.getByRole("button", { name: "Show chats" }).click();
+    const sidebar = isMobile ? page.getByRole("dialog", { name: "Chats" }) : page.locator("aside");
+    await expect(sidebar.getByRole("link", { name: "Ramp for my Esika deck?" })).toBeVisible();
+  });
   test("starts a fresh chat after an answer and can edit its composer", async ({
     page,
     isMobile,
