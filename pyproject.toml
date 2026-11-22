@@ -78,7 +78,9 @@ init_typed = true
 warn_required_dynamic_aliases = true
 
 [tool.pytest.ini_options]
-addopts = ["--import-mode=importlib", "--strict-markers", "-ra"]
+# Plain `pytest` skips tests that need local Supabase or model keys; a later `-m db` or
+# `-m live` on the command line replaces this selection.
+addopts = ["--import-mode=importlib", "--strict-markers", "-ra", "-m", "not db and not live"]
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
 testpaths = ["packages/core/tests", "packages/llm/tests", "api/tests", "ingest/tests", "supabase/tests"]

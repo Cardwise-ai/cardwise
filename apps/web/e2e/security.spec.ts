@@ -32,6 +32,16 @@ test.describe("security headers", () => {
     for (const value of scriptNonces) expect(value).toBe(nonce);
   });
 
+  test("the browser recognises every Permissions-Policy feature", async ({ page }) => {
+    const complaints: string[] = [];
+    page.on("console", (message) => {
+      if (message.text().includes("Permissions-Policy")) complaints.push(message.text());
+    });
+    await page.goto("/sign-in");
+    await expect(page.getByRole("button", { name: /Google/ })).toBeVisible();
+    expect(complaints).toEqual([]);
+  });
+
   test("a fresh nonce is issued per request", async ({ request }) => {
     const nonceOf = async () => {
       const response = await request.get("/sign-in");

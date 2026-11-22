@@ -32,7 +32,7 @@ uv run pre-commit install
 uv run ruff check .
 uv run ruff format --check .
 uv run mypy
-uv run pytest -m "not db and not live"
+uv run pytest            # skips db and live tests by default
 
 pnpm format:check
 pnpm lint
