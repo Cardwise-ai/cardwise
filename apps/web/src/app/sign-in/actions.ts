@@ -3,6 +3,7 @@
 import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { MOCK_SESSION_COOKIE, safeNextPath } from "@/lib/auth/shared";
+import { authOrigin } from "@/lib/auth/site-origin";
 import { isMocking } from "@/lib/env";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
@@ -17,6 +18,22 @@ const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 function readEmail(formData: FormData): string {
   const value = formData.get("email");
   return typeof value === "string" ? value.trim() : "";
+}
+
+const UNKNOWN_ORIGIN_MESSAGE = "Something went wrong. Reload the page and try again.";
+
+/**
+ * The origin auth callbacks return to. Supabase keeps the PKCE verifier in a cookie on the host
+ * that starts the flow, so a visitor on another host (a per-deployment URL) is first sent to the
+ * sign-in page on the callback host and starts there.
+ */
+async function callbackOrigin(next: string): Promise<string | null> {
+  const requestOrigin = (await headers()).get("origin");
+  const origin = authOrigin(requestOrigin);
+  if (origin && requestOrigin && requestOrigin !== origin) {
+    redirect(`${origin}/sign-in?next=${encodeURIComponent(next)}`);
+  }
+  return origin;
 }
 
 async function startMockSession(email: string) {
@@ -72,13 +89,8 @@ export async function signInWithGoogle(
     redirect(next);
   }
 
-  const origin = (await headers()).get("origin");
-  if (!origin)
-    return {
-      status: "error",
-      message: "Something went wrong. Reload the page and try again.",
-      email,
-    };
+  const origin = await callbackOrigin(next);
+  if (!origin) return { status: "error", message: UNKNOWN_ORIGIN_MESSAGE, email };
 
   const callback = new URL("/auth/callback", origin);
   callback.searchParams.set("next", next);
@@ -113,13 +125,9 @@ export async function sendMagicLink(
     redirect(next);
   }
 
-  const origin = (await headers()).get("origin");
-  if (!origin)
-    return {
-      status: "error",
-      message: "Something went wrong. Reload the page and try again.",
-      email,
-    };
+  const origin = await callbackOrigin(next);
+  if (!origin) return { status: "error", message: UNKNOWN_ORIGIN_MESSAGE, email };
+
   const callback = new URL("/auth/callback", origin);
   callback.searchParams.set("next", next);
 

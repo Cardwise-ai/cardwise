@@ -67,4 +67,39 @@ describe("signInWithGoogle", () => {
       },
     });
   });
+
+  it("returns Preview visitors to the branch URL Supabase allows", async () => {
+    vi.stubEnv("VERCEL_ENV", "preview");
+    vi.stubEnv("VERCEL_BRANCH_URL", "cardwise-web-git-dev-team.vercel.app");
+    mocks.headers.mockResolvedValue(
+      new Headers({ origin: "https://cardwise-web-git-dev-team.vercel.app" }),
+    );
+    signInWithOAuth.mockResolvedValue({
+      data: { url: "https://accounts.google.com/a" },
+      error: null,
+    });
+
+    await expect(signInWithGoogle({ status: "idle" }, form("/"))).rejects.toThrow("redirect:");
+    expect(signInWithOAuth).toHaveBeenCalledWith({
+      provider: "google",
+      options: {
+        redirectTo:
+          "https://cardwise-web-git-dev-team.vercel.app/auth/callback?next=%2F&flow=google",
+      },
+    });
+  });
+
+  it("moves a visitor on a deployment URL to the branch URL before starting OAuth", async () => {
+    // The PKCE verifier cookie lives on the host that starts the flow, so it must be the callback host.
+    vi.stubEnv("VERCEL_ENV", "preview");
+    vi.stubEnv("VERCEL_BRANCH_URL", "cardwise-web-git-dev-team.vercel.app");
+    mocks.headers.mockResolvedValue(
+      new Headers({ origin: "https://cardwise-abc123-team.vercel.app" }),
+    );
+
+    await expect(signInWithGoogle({ status: "idle" }, form("/chats/1"))).rejects.toThrow(
+      "redirect:https://cardwise-web-git-dev-team.vercel.app/sign-in?next=%2Fchats%2F1",
+    );
+    expect(signInWithOAuth).not.toHaveBeenCalled();
+  });
 });
