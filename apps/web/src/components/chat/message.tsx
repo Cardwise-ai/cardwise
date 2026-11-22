@@ -18,12 +18,15 @@ const toolStatus: Record<ToolName, string> = {
 };
 
 function StreamStatus({ message }: { message: UiMessage }) {
-  if (message.status !== "streaming") return null;
-  const label = message.tool
-    ? toolStatus[message.tool]
-    : message.content
-      ? null
-      : "Reading your question…";
+  if (message.status !== "streaming" && message.status !== "pending") return null;
+  const label =
+    message.status === "pending"
+      ? "Still answering. The reply will appear here when it is ready."
+      : message.tool
+        ? toolStatus[message.tool]
+        : message.content
+          ? null
+          : "Reading your question…";
   return (
     <div className="mt-2 flex h-6 items-center gap-2 text-sm text-muted">
       <span aria-hidden className="inline-block h-4 w-0.5 bg-accent animate-caret" />
@@ -112,8 +115,9 @@ export const MessageItem = memo(function MessageItem({
   }
 
   const streaming = message.status === "streaming";
+  const busyAnswer = streaming || message.status === "pending";
   return (
-    <article aria-label="Cardwise answered" aria-busy={streaming || undefined}>
+    <article aria-label="Cardwise answered" aria-busy={busyAnswer || undefined}>
       <h3 className="mb-2 font-serif text-lg font-semibold text-accent">Cardwise</h3>
       {message.content ? (
         <Markdown

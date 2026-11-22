@@ -114,6 +114,61 @@ describe("useChat", () => {
     }
   });
 
+  describe("reopened while the API was still answering", () => {
+    function askedAgo(ms: number) {
+      const chat = db.createChat("Left mid-answer");
+      db.addMessage(chat.id, {
+        id: crypto.randomUUID(),
+        role: "user",
+        content: "Finishers for Selvala",
+        cards: [],
+        status: "complete",
+        created_at: new Date(Date.now() - ms).toISOString(),
+      });
+      return chat.id;
+    }
+
+    it("waits for the answer and shows it once saved", async () => {
+      const chatId = askedAgo(2_000);
+      const { result } = renderHook(() => useChat(chatId, { answerPollMs: 20 }));
+      await waitFor(() =>
+        expect(result.current.messages.at(-1)).toMatchObject({
+          role: "assistant",
+          status: "pending",
+        }),
+      );
+
+      const answerId = crypto.randomUUID();
+      db.addMessage(chatId, {
+        id: answerId,
+        role: "assistant",
+        content: "Craterhoof Behemoth.",
+        cards: [],
+        status: "complete",
+        created_at: new Date().toISOString(),
+      });
+      await waitFor(() =>
+        expect(result.current.messages.at(-1)).toMatchObject({ id: answerId, status: "complete" }),
+      );
+    });
+
+    it("offers to ask again when the answer never arrived", async () => {
+      const chatId = askedAgo(30 * 60_000);
+      const { result } = await readyChat(chatId);
+      const missing = result.current.messages.at(-1)!;
+      expect(missing).toMatchObject({ role: "assistant", status: "failed", errorCode: "network" });
+
+      await act(async () => {
+        result.current.retry(missing.id);
+        await waitFor(() => expect(result.current.streaming).toBe(false));
+      });
+      expect(result.current.messages.at(-1)).toMatchObject({
+        role: "assistant",
+        status: "complete",
+      });
+    });
+  });
+
   it("retries the question behind a failed answer", async () => {
     const { result } = await readyChat();
     await act(() => result.current.send("model error on finishers"));

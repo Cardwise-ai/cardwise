@@ -7,7 +7,7 @@ import { listMessages, sendMessage } from "@/lib/api/endpoints";
 import { describeError } from "@/lib/errors";
 import type { StreamErrorCode, ToolName } from "@/lib/stream/events";
 
-export type UiMessageStatus = Message["status"] | "streaming";
+export type UiMessageStatus = Message["status"] | "streaming" | "pending";
 
 export interface UiMessage {
   id: string;
@@ -35,9 +35,34 @@ export function fromApi(message: Message): UiMessage {
   return { ...message, cards: [...message.cards] };
 }
 
+/** The API streams an answer for up to 300 s and saves it when the stream ends, with margin. */
+const ANSWER_WINDOW_MS = 330_000;
+const ANSWER_POLL_MS = 3_000;
+
+/**
+ * History that ends on a question has no saved answer yet. On Vercel the API keeps answering
+ * after the browser leaves and saves when it finishes, so a recent question gets a placeholder
+ * that waits for it; an older one gets a failed answer that can be asked again.
+ */
+function settleHistory(items: Message[], now: number): { messages: UiMessage[]; waiting: boolean } {
+  const messages = items.map(fromApi);
+  const last = items.at(-1);
+  if (last?.role !== "user") return { messages, waiting: false };
+  const waiting = now - Date.parse(last.created_at) < ANSWER_WINDOW_MS;
+  messages.push({
+    id: `pending-${last.id}`,
+    role: "assistant",
+    content: "",
+    cards: [],
+    status: waiting ? "pending" : "failed",
+    errorCode: waiting ? undefined : "network",
+  });
+  return { messages, waiting };
+}
+
 export function useChat(
   chatId: string,
-  options: { onSettled?: () => void; initialMessage?: string } = {},
+  options: { onSettled?: () => void; initialMessage?: string; answerPollMs?: number } = {},
 ) {
   const [messages, setMessages] = useState<UiMessage[]>([]);
   const [history, setHistory] = useState<HistoryState>({ status: "loading" });
@@ -46,6 +71,7 @@ export function useChat(
   const controller = useRef<AbortController | null>(null);
   const onSettled = useRef(options.onSettled);
   const [historyAttempt, setHistoryAttempt] = useState(0);
+  const answerPollMs = options.answerPollMs ?? ANSWER_POLL_MS;
 
   useEffect(() => {
     onSettled.current = options.onSettled;
@@ -180,26 +206,42 @@ export function useChat(
       if (pendingFirst) void send(pendingFirst);
       return;
     }
+    let poll: ReturnType<typeof setTimeout> | undefined;
+    const load = (first: boolean) =>
+      listMessages(getApiClient(), chatId).then(
+        (items) => {
+          if (!active) return;
+          // A message sent meanwhile owns the list until its stream settles.
+          if (controller.current) {
+            poll = setTimeout(() => void load(false), answerPollMs);
+            return;
+          }
+          const settled = settleHistory(items, Date.now());
+          setMessages(settled.messages);
+          setHistory({ status: "ready" });
+          if (settled.waiting) poll = setTimeout(() => void load(false), answerPollMs);
+          else if (!first) onSettled.current?.();
+        },
+        (error: unknown) => {
+          if (!active) return;
+          if (!first) {
+            poll = setTimeout(() => void load(false), answerPollMs);
+            return;
+          }
+          setHistory({
+            status: "error",
+            message: describeError(error),
+            notFound: error instanceof ApiError && error.code === "not_found",
+          });
+        },
+      );
     setHistory({ status: "loading" });
-    listMessages(getApiClient(), chatId).then(
-      (items) => {
-        if (!active) return;
-        setMessages(items.map(fromApi));
-        setHistory({ status: "ready" });
-      },
-      (error: unknown) => {
-        if (!active) return;
-        setHistory({
-          status: "error",
-          message: describeError(error),
-          notFound: error instanceof ApiError && error.code === "not_found",
-        });
-      },
-    );
+    void load(true);
     return () => {
       active = false;
+      clearTimeout(poll);
     };
-  }, [chatId, historyAttempt, send]);
+  }, [chatId, historyAttempt, send, answerPollMs]);
 
   // Abort on a real unmount only. React's development double-mount remounts synchronously, so
   // the deferred check sees the component mounted again and keeps the stream alive.
