@@ -5,16 +5,14 @@ from fastapi.testclient import TestClient
 from pydantic import ValidationError
 
 from cardwise_api.export_schemas import OPENAPI_DIR, render
-from cardwise_api.main import create_app
 from cardwise_api.models import ChatCreate, MessageCreate
 from cardwise_api.stream_events import stream_event_adapter
-
-AUTH = {"Authorization": "Bearer test-token"}
+from cardwise_api.testing import Harness
 
 
 @pytest.fixture
-def client() -> TestClient:
-    return TestClient(create_app(), raise_server_exceptions=False)
+def client(harness: Harness) -> TestClient:
+    return harness.client
 
 
 @pytest.mark.parametrize("name", ["openapi.json", "stream-events.schema.json"])
@@ -41,15 +39,17 @@ def test_missing_token_gets_the_error_shape(client: TestClient) -> None:
     assert error["request_id"] == response.headers["x-request-id"]
 
 
-def test_stubs_answer_not_implemented(client: TestClient) -> None:
-    response = client.get("/v1/chats", headers=AUTH)
+def test_stubs_answer_not_implemented(harness: Harness) -> None:
+    response = harness.client.get(f"/v1/cards/{uuid4()}", headers=harness.headers)
     assert response.status_code == 501
     assert response.json()["error"]["code"] == "not_implemented"
 
 
-def test_validation_errors_name_fields_but_not_values(client: TestClient) -> None:
+def test_validation_errors_name_fields_but_not_values(harness: Harness) -> None:
     secret = "x" * 4001
-    response = client.post(f"/v1/chats/{uuid4()}/messages", json={"content": secret}, headers=AUTH)
+    response = harness.client.post(
+        f"/v1/chats/{uuid4()}/messages", json={"content": secret}, headers=harness.headers
+    )
     assert response.status_code == 422
     body = response.json()
     assert body["error"]["fields"] == ["content"]

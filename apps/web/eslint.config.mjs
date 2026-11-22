@@ -22,5 +22,13 @@ export default defineConfig([
       "jsx-a11y/label-has-associated-control": "error",
     },
   },
-  globalIgnores([".next/**", "out/**", "build/**", "next-env.d.ts"]),
+  globalIgnores([
+    ".next/**",
+    "out/**",
+    "build/**",
+    "next-env.d.ts",
+    "public/mockServiceWorker.js",
+    "test-results/**",
+    "playwright-report/**",
+  ]),
 ]);

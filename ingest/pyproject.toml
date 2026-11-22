@@ -3,7 +3,14 @@ name = "cardwise-ingest"
 version = "0.1.0"
 description = "Scryfall and Tagger import into the card corpus"
 requires-python = ">=3.12,<3.13"
-dependencies = ["cardwise-core", "pydantic>=2.14,<3"]
+dependencies = [
+    "asyncpg>=0.32,<0.33",
+    "boto3>=1.44.9,<2",
+    "cardwise-core",
+    "httpx>=0.28,<0.29",
+    "pydantic>=2.14,<3",
+    "pydantic-settings>=2,<3",
+]
 
 [tool.uv.sources]
 cardwise-core = { workspace = true }

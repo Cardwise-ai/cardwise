@@ -1,0 +1,732 @@
+[
+  {
+    "oracle_id": "0310dfdb-0498-488d-9f1a-279f8239e024",
+    "name": "Meren of Clan Nel Toth",
+    "layout": "normal",
+    "mana_cost": "{2}{B}{G}",
+    "mana_value": 4.0,
+    "type_line": "Legendary Creature — Human Shaman",
+    "oracle_text": "Whenever another creature you control dies, you get an experience counter.\nAt the beginning of your end step, choose target creature card in your graveyard. If that card's mana value is less than or equal to the number of experience counters you have, return it to the battlefield. Otherwise, put it into your hand.",
+    "color_identity": ["B", "G"],
+    "keywords": [],
+    "legalities": {
+      "commander": "legal",
+      "oathbreaker": "legal",
+      "brawl": "not_legal",
+      "duel": "legal"
+    },
+    "faces": [],
+    "tags": [
+      {
+        "slug": "recursion",
+        "label": "Recursion"
+      },
+      {
+        "slug": "aristocrats",
+        "label": "Aristocrats"
+      }
+    ],
+    "rulings": [
+      {
+        "published_at": "2015-11-04",
+        "source": "wotc",
+        "text": "If Meren of Clan Nel Toth leaves the battlefield at the same time as other creatures you control die, its first ability will trigger for each of those creatures."
+      },
+      {
+        "published_at": "2015-11-04",
+        "source": "wotc",
+        "text": "You can’t choose to put the creature card into your hand if its mana value is less than or equal to the number of experience counters you have as the ability resolves."
+      },
+      {
+        "published_at": "2015-11-04",
+        "source": "wotc",
+        "text": "If a creature card in your graveyard has {X} in its mana cost, X is 0."
+      }
+    ],
+    "image_uri": "https://cards.scryfall.io/normal/front/5/0/508b1442-bf2c-4ad6-9bcf-bd894e081ab6.jpg?1783907026",
+    "scryfall_uri": "https://scryfall.com/card/tdc/297/meren-of-clan-nel-toth"
+  },
+  {
+    "oracle_id": "f82a4e85-526d-4456-b700-7760043a31be",
+    "name": "Viscera Seer",
+    "layout": "normal",
+    "mana_cost": "{B}",
+    "mana_value": 1.0,
+    "type_line": "Creature — Vampire Wizard",
+    "oracle_text": "Sacrifice a creature: Scry 1. (Look at the top card of your library. You may put that card on the bottom.)",
+    "color_identity": ["B"],
+    "keywords": ["Scry"],
+    "legalities": {
+      "commander": "legal",
+      "oathbreaker": "legal",
+      "brawl": "not_legal",
+      "duel": "legal"
+    },
+    "faces": [],
+    "tags": [
+      {
+        "slug": "sacrifice-outlet",
+        "label": "Sacrifice outlet"
+      },
+      {
+        "slug": "free-sacrifice-outlet",
+        "label": "Free sacrifice outlet"
+      },
+      {
+        "slug": "scry",
+        "label": "Scry"
+      }
+    ],
+    "rulings": [
+      {
+        "published_at": "2010-08-15",
+        "source": "wotc",
+        "text": "You can sacrifice Viscera Seer to activate its own ability."
+      },
+      {
+        "published_at": "2010-08-15",
+        "source": "wotc",
+        "text": "If you sacrifice an attacking or blocking creature during the declare blockers step, it won't deal combat damage. If you wait until the combat damage step, but that creature is dealt lethal damage, it'll be destroyed before you get a chance to sacrifice it."
+      }
+    ],
+    "image_uri": "https://cards.scryfall.io/normal/front/f/5/f511830b-1c1f-4d30-aa5d-4314726d142e.jpg?1783903780",
+    "scryfall_uri": "https://scryfall.com/card/soc/229/viscera-seer"
+  },
+  {
+    "oracle_id": "a1cc5e37-b09a-4b7f-afd5-77c1c35aa425",
+    "name": "Carrion Feeder",
+    "layout": "normal",
+    "mana_cost": "{B}",
+    "mana_value": 1.0,
+    "type_line": "Creature — Zombie",
+    "oracle_text": "This creature can't block.\nSacrifice a creature: Put a +1/+1 counter on this creature.",
+    "color_identity": ["B"],
+    "keywords": [],
+    "legalities": {
+      "commander": "legal",
+      "oathbreaker": "legal",
+      "brawl": "not_legal",
+      "duel": "legal"
+    },
+    "faces": [],
+    "tags": [
+      {
+        "slug": "sacrifice-outlet",
+        "label": "Sacrifice outlet"
+      },
+      {
+        "slug": "free-sacrifice-outlet",
+        "label": "Free sacrifice outlet"
+      },
+      {
+        "slug": "counters",
+        "label": "+1/+1 counters"
+      }
+    ],
+    "rulings": [],
+    "image_uri": "https://cards.scryfall.io/normal/front/0/a/0a19da90-880e-4eca-8cf7-6d7baf090d53.jpg?1783933131",
+    "scryfall_uri": "https://scryfall.com/card/mh1/81/carrion-feeder"
+  },
+  {
+    "oracle_id": "fdba89eb-1cf5-46e6-9d09-1adb9bc40fcd",
+    "name": "Yahenni, Undying Partisan",
+    "layout": "normal",
+    "mana_cost": "{2}{B}",
+    "mana_value": 3.0,
+    "type_line": "Legendary Creature — Aetherborn Vampire",
+    "oracle_text": "Haste\nWhenever a creature an opponent controls dies, put a +1/+1 counter on Yahenni.\nSacrifice another creature: Yahenni gains indestructible until end of turn.",
+    "color_identity": ["B"],
+    "keywords": ["Haste"],
+    "legalities": {
+      "commander": "legal",
+      "oathbreaker": "legal",
+      "brawl": "legal",
+      "duel": "legal"
+    },
+    "faces": [],
+    "tags": [
+      {
+        "slug": "sacrifice-outlet",
+        "label": "Sacrifice outlet"
+      },
+      {
+        "slug": "free-sacrifice-outlet",
+        "label": "Free sacrifice outlet"
+      },
+      {
+        "slug": "aristocrats",
+        "label": "Aristocrats"
+      }
+    ],
+    "rulings": [
+      {
+        "published_at": "2017-02-09",
+        "source": "wotc",
+        "text": "If Yahenni and a creature an opponent controls die simultaneously (perhaps because they fought or were in combat together), Yahenni won't be on the battlefield as its triggered ability resolves. It can't be saved by the +1/+1 counter that would have been put on it."
+      }
+    ],
+    "image_uri": "https://cards.scryfall.io/normal/front/5/1/518b155a-cb84-48d3-9aba-07577f60f091.jpg?1783903779",
+    "scryfall_uri": "https://scryfall.com/card/soc/232/yahenni-undying-partisan"
+  },
+  {
+    "oracle_id": "4d18bcba-a346-445e-a182-6cc30b7e066d",
+    "name": "Ashnod's Altar",
+    "layout": "normal",
+    "mana_cost": "{3}",
+    "mana_value": 3.0,
+    "type_line": "Artifact",
+    "oracle_text": "Sacrifice a creature: Add {C}{C}.",
+    "color_identity": [],
+    "keywords": [],
+    "legalities": {
+      "commander": "legal",
+      "oathbreaker": "legal",
+      "brawl": "legal",
+      "duel": "legal"
+    },
+    "faces": [],
+    "tags": [
+      {
+        "slug": "sacrifice-outlet",
+        "label": "Sacrifice outlet"
+      },
+      {
+        "slug": "free-sacrifice-outlet",
+        "label": "Free sacrifice outlet"
+      },
+      {
+        "slug": "mana-rock",
+        "label": "Mana rock"
+      }
+    ],
+    "rulings": [],
+    "image_uri": "https://cards.scryfall.io/normal/front/3/c/3c0f7157-a375-499c-92c7-d47d2e95dbad.jpg?1783915605",
+    "scryfall_uri": "https://scryfall.com/card/cmm/368/ashnods-altar"
+  },
+  {
+    "oracle_id": "8d02b297-97c4-4379-9862-0a462400f66f",
+    "name": "Phyrexian Altar",
+    "layout": "normal",
+    "mana_cost": "{3}",
+    "mana_value": 3.0,
+    "type_line": "Artifact",
+    "oracle_text": "Sacrifice a creature: Add one mana of any color.",
+    "color_identity": [],
+    "keywords": [],
+    "legalities": {
+      "commander": "legal",
+      "oathbreaker": "legal",
+      "brawl": "not_legal",
+      "duel": "legal"
+    },
+    "faces": [],
+    "tags": [
+      {
+        "slug": "sacrifice-outlet",
+        "label": "Sacrifice outlet"
+      },
+      {
+        "slug": "free-sacrifice-outlet",
+        "label": "Free sacrifice outlet"
+      },
+      {
+        "slug": "mana-rock",
+        "label": "Mana rock"
+      }
+    ],
+    "rulings": [],
+    "image_uri": "https://cards.scryfall.io/normal/front/9/5/95d9f93c-50a8-41a9-be98-d1900bf1c12f.jpg?1783921789",
+    "scryfall_uri": "https://scryfall.com/card/2x2/311/phyrexian-altar"
+  },
+  {
+    "oracle_id": "3adbd963-e85d-4569-963a-4472594f06f9",
+    "name": "Woe Strider",
+    "layout": "normal",
+    "mana_cost": "{2}{B}",
+    "mana_value": 3.0,
+    "type_line": "Creature — Horror",
+    "oracle_text": "When this creature enters, create a 0/1 white Goat creature token.\nSacrifice another creature: Scry 1.\nEscape—{3}{B}{B}, Exile four other cards from your graveyard. (You may cast this card from your graveyard for its escape cost.)\nThis creature escapes with two +1/+1 counters on it.",
+    "color_identity": ["B"],
+    "keywords": ["Escape", "Scry"],
+    "legalities": {
+      "commander": "legal",
+      "oathbreaker": "legal",
+      "brawl": "legal",
+      "duel": "legal"
+    },
+    "faces": [],
+    "tags": [
+      {
+        "slug": "sacrifice-outlet",
+        "label": "Sacrifice outlet"
+      },
+      {
+        "slug": "free-sacrifice-outlet",
+        "label": "Free sacrifice outlet"
+      },
+      {
+        "slug": "recursion",
+        "label": "Recursion"
+      }
+    ],
+    "rulings": [
+      {
+        "published_at": "2020-01-24",
+        "source": "wotc",
+        "text": "Once you begin casting a spell with escape, it immediately moves to the stack. Players can't take any other actions until you're done casting the spell."
+      },
+      {
+        "published_at": "2020-01-24",
+        "source": "wotc",
+        "text": "If a card with escape is put into your graveyard during your turn, you'll be able to cast it right away if it's legal to do so, before an opponent can take any actions."
+      },
+      {
+        "published_at": "2020-01-24",
+        "source": "wotc",
+        "text": "To determine the total cost of a spell, start with the mana cost or alternative cost you're paying (such as an escape cost), add any cost increases, then apply any cost reductions. The mana value of the spell remains unchanged, no matter what the total cost to cast it was and no matter whether an alternative cost was paid."
+      }
+    ],
+    "image_uri": "https://cards.scryfall.io/normal/front/f/4/f458ae68-5cda-4c40-a348-47b4196fba02.jpg?1783903780",
+    "scryfall_uri": "https://scryfall.com/card/soc/231/woe-strider"
+  },
+  {
+    "oracle_id": "d64e9152-ef24-4394-aeb0-9c3befc56549",
+    "name": "Altar of Dementia",
+    "layout": "normal",
+    "mana_cost": "{2}",
+    "mana_value": 2.0,
+    "type_line": "Artifact",
+    "oracle_text": "Sacrifice a creature: Target player mills cards equal to the sacrificed creature's power.",
+    "color_identity": [],
+    "keywords": ["Mill"],
+    "legalities": {
+      "commander": "legal",
+      "oathbreaker": "legal",
+      "brawl": "legal",
+      "duel": "legal"
+    },
+    "faces": [],
+    "tags": [
+      {
+        "slug": "sacrifice-outlet",
+        "label": "Sacrifice outlet"
+      },
+      {
+        "slug": "free-sacrifice-outlet",
+        "label": "Free sacrifice outlet"
+      },
+      {
+        "slug": "mill",
+        "label": "Mill"
+      }
+    ],
+    "rulings": [
+      {
+        "published_at": "2019-06-14",
+        "source": "wotc",
+        "text": "The number of cards the target player puts into their graveyard is equal to the power of the sacrificed creature as it last existed on the battlefield."
+      },
+      {
+        "published_at": "2019-06-14",
+        "source": "wotc",
+        "text": "If the target player's library contains fewer cards than the sacrificed creature's power, all of those cards are put into that player's graveyard. That player won't lose the game until they try to draw from the empty library."
+      }
+    ],
+    "image_uri": "https://cards.scryfall.io/normal/front/1/6/169356e0-46dc-4096-8e66-36726454f104.jpg?1783933075",
+    "scryfall_uri": "https://scryfall.com/card/mh1/218/altar-of-dementia"
+  },
+  {
+    "oracle_id": "ea7b0704-7715-4f8a-b32f-d2d2f3b36054",
+    "name": "Spawning Pit",
+    "layout": "normal",
+    "mana_cost": "{2}",
+    "mana_value": 2.0,
+    "type_line": "Artifact",
+    "oracle_text": "Sacrifice a creature: Put a charge counter on this artifact.\n{1}, Remove two charge counters from this artifact: Create a 2/2 colorless Spawn artifact creature token.",
+    "color_identity": [],
+    "keywords": [],
+    "legalities": {
+      "commander": "legal",
+      "oathbreaker": "legal",
+      "brawl": "not_legal",
+      "duel": "legal"
+    },
+    "faces": [],
+    "tags": [
+      {
+        "slug": "sacrifice-outlet",
+        "label": "Sacrifice outlet"
+      },
+      {
+        "slug": "free-sacrifice-outlet",
+        "label": "Free sacrifice outlet"
+      },
+      {
+        "slug": "token-maker",
+        "label": "Token maker"
+      }
+    ],
+    "rulings": [],
+    "image_uri": "https://cards.scryfall.io/normal/front/e/9/e9a8ca49-fc8f-49c1-a7c6-c8326b2deb52.jpg?1783941267",
+    "scryfall_uri": "https://scryfall.com/card/td2/69/spawning-pit"
+  },
+  {
+    "oracle_id": "8c52bd39-0586-48ca-b263-17210cf9feb6",
+    "name": "Craterhoof Behemoth",
+    "layout": "normal",
+    "mana_cost": "{5}{G}{G}{G}",
+    "mana_value": 8.0,
+    "type_line": "Creature — Beast",
+    "oracle_text": "Haste\nWhen this creature enters, creatures you control gain trample and get +X/+X until end of turn, where X is the number of creatures you control.",
+    "color_identity": ["G"],
+    "keywords": ["Haste"],
+    "legalities": {
+      "commander": "legal",
+      "oathbreaker": "legal",
+      "brawl": "legal",
+      "duel": "legal"
+    },
+    "faces": [],
+    "tags": [
+      {
+        "slug": "finisher",
+        "label": "Finisher"
+      },
+      {
+        "slug": "overrun",
+        "label": "Overrun effect"
+      }
+    ],
+    "rulings": [
+      {
+        "published_at": "2025-04-04",
+        "source": "wotc",
+        "text": "The value of X is calculated only once, as Craterhoof Behemoth’s last ability resolves."
+      },
+      {
+        "published_at": "2025-04-04",
+        "source": "wotc",
+        "text": "Craterhoof Behemoth’s triggered ability affects only creatures you control at the time it resolves. Creatures you begin to control later in the turn won’t gain trample and get +X/+X."
+      }
+    ],
+    "image_uri": "https://cards.scryfall.io/normal/front/2/7/276f5cee-a501-4658-bd4d-7a044bf1ccbc.jpg?1783907345",
+    "scryfall_uri": "https://scryfall.com/card/tdm/138/craterhoof-behemoth"
+  },
+  {
+    "oracle_id": "69872a9a-fe54-4e58-940c-89395af71acd",
+    "name": "Finale of Devastation",
+    "layout": "normal",
+    "mana_cost": "{X}{G}{G}",
+    "mana_value": 2.0,
+    "type_line": "Sorcery",
+    "oracle_text": "Search your library and/or graveyard for a creature card with mana value X or less and put it onto the battlefield. If you search your library this way, shuffle. If X is 10 or more, creatures you control get +X/+X and gain haste until end of turn.",
+    "color_identity": ["G"],
+    "keywords": [],
+    "legalities": {
+      "commander": "legal",
+      "oathbreaker": "legal",
+      "brawl": "legal",
+      "duel": "legal"
+    },
+    "faces": [],
+    "tags": [
+      {
+        "slug": "finisher",
+        "label": "Finisher"
+      },
+      {
+        "slug": "tutor",
+        "label": "Tutor"
+      },
+      {
+        "slug": "overrun",
+        "label": "Overrun effect"
+      }
+    ],
+    "rulings": [
+      {
+        "published_at": "2019-05-03",
+        "source": "wotc",
+        "text": "If a creature card in your library or graveyard has {X} in its mana cost, X is considered to be 0."
+      },
+      {
+        "published_at": "2019-05-03",
+        "source": "wotc",
+        "text": "If X is 10 or more, the creature card you just put onto the battlefield will get +X/+X and haste."
+      },
+      {
+        "published_at": "2019-05-03",
+        "source": "wotc",
+        "text": "No player may take action between the time you reveal which creature card you'll put onto the battlefield and the time it gets +X/+X and haste if X is 10 or more. Any abilities that trigger as it enters the battlefield will be put onto the stack after your creatures get +X/+X and haste."
+      }
+    ],
+    "image_uri": "https://cards.scryfall.io/normal/front/b/1/b10d99bf-b2ce-4443-b924-ff0eb8be1033.jpg?1783915632",
+    "scryfall_uri": "https://scryfall.com/card/cmm/289/finale-of-devastation"
+  },
+  {
+    "oracle_id": "7e52e91b-70e6-4f26-a5d4-b8e33d1debbf",
+    "name": "Pathbreaker Ibex",
+    "layout": "normal",
+    "mana_cost": "{4}{G}{G}",
+    "mana_value": 6.0,
+    "type_line": "Creature — Goat",
+    "oracle_text": "Whenever this creature attacks, creatures you control gain trample and get +X/+X until end of turn, where X is the greatest power among creatures you control.",
+    "color_identity": ["G"],
+    "keywords": [],
+    "legalities": {
+      "commander": "legal",
+      "oathbreaker": "legal",
+      "brawl": "legal",
+      "duel": "legal"
+    },
+    "faces": [],
+    "tags": [
+      {
+        "slug": "finisher",
+        "label": "Finisher"
+      },
+      {
+        "slug": "overrun",
+        "label": "Overrun effect"
+      }
+    ],
+    "rulings": [
+      {
+        "published_at": "2025-02-07",
+        "source": "wotc",
+        "text": "If the greatest power among creatures you control is negative as this creature’s ability resolves, X is considered to be 0."
+      },
+      {
+        "published_at": "2017-07-14",
+        "source": "wotc",
+        "text": "If this creature's power is negative as its ability resolves, X is considered to be 0."
+      }
+    ],
+    "image_uri": "https://cards.scryfall.io/normal/front/4/6/4608ea44-e1b2-42de-a0a2-e6d6d24d89d0.jpg?1783936252",
+    "scryfall_uri": "https://scryfall.com/card/cma/132/pathbreaker-ibex"
+  },
+  {
+    "oracle_id": "69b52907-8aff-4f2a-a391-7d1ab2669b5c",
+    "name": "End-Raze Forerunners",
+    "layout": "normal",
+    "mana_cost": "{5}{G}{G}{G}",
+    "mana_value": 8.0,
+    "type_line": "Creature — Boar",
+    "oracle_text": "Vigilance, trample, haste\nWhen this creature enters, other creatures you control get +2/+2 and gain vigilance and trample until end of turn.",
+    "color_identity": ["G"],
+    "keywords": ["Vigilance", "Haste", "Trample"],
+    "legalities": {
+      "commander": "legal",
+      "oathbreaker": "legal",
+      "brawl": "legal",
+      "duel": "legal"
+    },
+    "faces": [],
+    "tags": [
+      {
+        "slug": "finisher",
+        "label": "Finisher"
+      },
+      {
+        "slug": "overrun",
+        "label": "Overrun effect"
+      }
+    ],
+    "rulings": [
+      {
+        "published_at": "2019-01-25",
+        "source": "wotc",
+        "text": "The triggered ability of End-Raze Forerunners affects only creatures you control at the time it resolves. Creatures you begin to control later in the turn won't get +2/+2 or gain vigilance or trample."
+      }
+    ],
+    "image_uri": "https://cards.scryfall.io/normal/front/4/7/47a74813-6d8b-4b11-8a5e-5b83d2d98c34.jpg?1783922408",
+    "scryfall_uri": "https://scryfall.com/card/clb/822/end-raze-forerunners"
+  },
+  {
+    "oracle_id": "92023a5d-a143-4950-a71b-d736e6b8e959",
+    "name": "Esika, God of the Tree // The Prismatic Bridge",
+    "layout": "modal_dfc",
+    "mana_cost": "{1}{G}{G} // {W}{U}{B}{R}{G}",
+    "mana_value": 3.0,
+    "type_line": "Legendary Creature — God // Legendary Enchantment",
+    "oracle_text": "Vigilance\n{T}: Add one mana of any color.\nOther legendary creatures you control have vigilance and \"{T}: Add one mana of any color.\"\n\nAt the beginning of your upkeep, reveal cards from the top of your library until you reveal a creature or planeswalker card. Put that card onto the battlefield and the rest on the bottom of your library in a random order.",
+    "color_identity": ["W", "U", "B", "R", "G"],
+    "keywords": ["Vigilance"],
+    "legalities": {
+      "commander": "legal",
+      "oathbreaker": "legal",
+      "brawl": "legal",
+      "duel": "legal"
+    },
+    "faces": [
+      {
+        "name": "Esika, God of the Tree",
+        "mana_cost": "{1}{G}{G}",
+        "type_line": "Legendary Creature — God",
+        "oracle_text": "Vigilance\n{T}: Add one mana of any color.\nOther legendary creatures you control have vigilance and \"{T}: Add one mana of any color.\"",
+        "power": "1",
+        "toughness": "4",
+        "loyalty": null,
+        "defense": null,
+        "image_uri": "https://cards.scryfall.io/normal/front/f/6/f6cd7465-9dd0-473c-ac5e-dd9e2f22f5f6.jpg?1783928221"
+      },
+      {
+        "name": "The Prismatic Bridge",
+        "mana_cost": "{W}{U}{B}{R}{G}",
+        "type_line": "Legendary Enchantment",
+        "oracle_text": "At the beginning of your upkeep, reveal cards from the top of your library until you reveal a creature or planeswalker card. Put that card onto the battlefield and the rest on the bottom of your library in a random order.",
+        "power": null,
+        "toughness": null,
+        "loyalty": null,
+        "defense": null,
+        "image_uri": "https://cards.scryfall.io/normal/back/f/6/f6cd7465-9dd0-473c-ac5e-dd9e2f22f5f6.jpg?1783928221"
+      }
+    ],
+    "tags": [
+      {
+        "slug": "mana-dork",
+        "label": "Mana creature"
+      },
+      {
+        "slug": "modal-double-faced",
+        "label": "Modal double-faced"
+      }
+    ],
+    "rulings": [
+      {
+        "published_at": "2021-02-05",
+        "source": "wotc",
+        "text": "If a creature loses vigilance after it attacks (perhaps because Esika leaves the battlefield), that creature will continue attacking. It won't become tapped."
+      },
+      {
+        "published_at": "2021-02-05",
+        "source": "wotc",
+        "text": "While resolving the triggered ability of The Prismatic Bridge, if there are no creature or planeswalker cards in your library, you'll simply reveal your entire library, randomize it, and continue playing."
+      },
+      {
+        "published_at": "2021-02-05",
+        "source": "wotc",
+        "text": "If you reveal a double-faced card whose front face is a creature or planeswalker, you'll put it onto the battlefield with its front face up."
+      }
+    ],
+    "image_uri": "https://cards.scryfall.io/normal/front/f/6/f6cd7465-9dd0-473c-ac5e-dd9e2f22f5f6.jpg?1783928221",
+    "scryfall_uri": "https://scryfall.com/card/khm/168/esika-god-of-the-tree-the-prismatic-bridge"
+  },
+  {
+    "oracle_id": "ae92942b-919c-4ea9-b693-85fcef765d5a",
+    "name": "Fire // Ice",
+    "layout": "split",
+    "mana_cost": "{1}{R} // {1}{U}",
+    "mana_value": 4.0,
+    "type_line": "Instant // Instant",
+    "oracle_text": "Fire deals 2 damage divided as you choose among one or two targets.\n\nTap target permanent.\nDraw a card.",
+    "color_identity": ["U", "R"],
+    "keywords": [],
+    "legalities": {
+      "commander": "legal",
+      "oathbreaker": "legal",
+      "brawl": "not_legal",
+      "duel": "legal"
+    },
+    "faces": [
+      {
+        "name": "Fire",
+        "mana_cost": "{1}{R}",
+        "type_line": "Instant",
+        "oracle_text": "Fire deals 2 damage divided as you choose among one or two targets.",
+        "power": null,
+        "toughness": null,
+        "loyalty": null,
+        "defense": null,
+        "image_uri": null
+      },
+      {
+        "name": "Ice",
+        "mana_cost": "{1}{U}",
+        "type_line": "Instant",
+        "oracle_text": "Tap target permanent.\nDraw a card.",
+        "power": null,
+        "toughness": null,
+        "loyalty": null,
+        "defense": null,
+        "image_uri": null
+      }
+    ],
+    "tags": [
+      {
+        "slug": "removal",
+        "label": "Removal"
+      },
+      {
+        "slug": "card-draw",
+        "label": "Card draw"
+      }
+    ],
+    "rulings": [
+      {
+        "published_at": "2022-12-08",
+        "source": "wotc",
+        "text": "To cast a split card, choose one of its halves to cast. There's no way to cast both halves of this split card."
+      },
+      {
+        "published_at": "2022-12-08",
+        "source": "wotc",
+        "text": "Split cards have two card faces on a single card. The characteristics of the half you didn't cast are ignored while the spell is on the stack."
+      },
+      {
+        "published_at": "2022-12-08",
+        "source": "wotc",
+        "text": "Each split card is a single card. For example, if you discard a split card, you've discarded one card, not two. If an effect counts the number of sorcery cards in your graveyard, Assault // Battery counts once, not twice."
+      }
+    ],
+    "image_uri": "https://cards.scryfall.io/normal/front/1/8/18303862-4726-4136-814f-157aa7006579.jpg?1783918420",
+    "scryfall_uri": "https://scryfall.com/card/dmr/215/fire-ice"
+  },
+  {
+    "oracle_id": "1d725121-e50c-42f0-9128-56802f07c89e",
+    "name": "Selvala, Heart of the Wilds",
+    "layout": "normal",
+    "mana_cost": "{1}{G}{G}",
+    "mana_value": 3.0,
+    "type_line": "Legendary Creature — Elf Scout",
+    "oracle_text": "Whenever another creature enters, its controller may draw a card if its power is greater than each other creature's power.\n{G}, {T}: Add X mana in any combination of colors, where X is the greatest power among creatures you control.",
+    "color_identity": ["G"],
+    "keywords": [],
+    "legalities": {
+      "commander": "legal",
+      "oathbreaker": "legal",
+      "brawl": "legal",
+      "duel": "legal"
+    },
+    "faces": [],
+    "tags": [
+      {
+        "slug": "mana-dork",
+        "label": "Mana creature"
+      },
+      {
+        "slug": "group-hug",
+        "label": "Group hug"
+      }
+    ],
+    "rulings": [
+      {
+        "published_at": "2016-08-23",
+        "source": "wotc",
+        "text": "Selvala's last ability is a mana ability. It doesn't use the stack and can't be responded to. If the greatest power among creatures you control is 0 or less at that time, no mana is added."
+      },
+      {
+        "published_at": "2016-08-23",
+        "source": "wotc",
+        "text": "The new creature's power is compared to the power of each other creature on the battlefield as the first ability resolves. If another creature has the same or higher power than the new creature's power, no one may draw a card."
+      },
+      {
+        "published_at": "2016-08-23",
+        "source": "wotc",
+        "text": "If the new creature isn't on the battlefield as the first ability resolves, use its power when it left the battlefield to determine whether its controller may draw a card. Note that effects that reduced its power before it left the battlefield will apply."
+      }
+    ],
+    "image_uri": "https://cards.scryfall.io/normal/front/8/1/812856be-cf51-42de-96d2-4ac91e71d442.jpg?1783904541",
+    "scryfall_uri": "https://scryfall.com/card/ecc/116/selvala-heart-of-the-wilds"
+  }
+]

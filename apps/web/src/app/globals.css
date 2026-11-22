@@ -1,25 +1,319 @@
 @import "tailwindcss";
 
+/*
+ * The desk borrows its colors from a playmat, card stock, and old brass hardware. Mana colors
+ * remain reserved for actual mana symbols and color-identity pips.
+ */
 @theme {
-  --color-surface: #f3f4f1;
-  --color-panel: #ffffff;
-  --color-ink: #22262b;
-  --color-muted: #5d646c;
-  --color-rule: #d6d9d4;
-  --color-accent: #2f5d50;
+  --color-*: initial;
+  --color-white: #ffffff;
+  --color-transparent: transparent;
+  --color-surface: #e6ede5;
+  --color-panel: #fbfaf4;
+  --color-ink: #1b2a25;
+  --color-muted: #4e625a;
+  --color-rule: #c7d3c9;
+  --color-rule-strong: #9cab9f;
+  --color-accent: #1d4b40;
+  --color-accent-strong: #14382f;
+  --color-accent-wash: #d9e7dd;
+  --color-hover: #dde7dd;
+  --color-placeholder: #e1e9e1;
+  --color-brass: #b18a3c;
+  --color-river: #36798a;
+  --color-action-ink: #ffffff;
+  --color-danger-ink: #ffffff;
+  --color-overlay: #10211c;
+  --color-rail: #1d4b40;
+  --color-rail-ink: #fbfaf4;
+  --color-rail-muted: #c8d8ca;
+  --color-rail-rule: #507266;
+  --color-rail-hover: #2a5a4d;
+  --color-danger: #9c2f2a;
+  --color-danger-strong: #7f2622;
+  --color-danger-wash: #f8ecea;
+
+  /* Mana colors appear only inside mana symbols and color-identity pips. */
+  --color-mana-w: #f6f1d3;
+  --color-mana-u: #b9d5ea;
+  --color-mana-b: #c9c1bc;
+  --color-mana-r: #eeb39b;
+  --color-mana-g: #a9cfb0;
+  --color-mana-c: #d9d6d2;
+
+  --text-*: initial;
+  --text-sm: 13px;
+  --text-sm--line-height: 20px;
+  --text-base: 15px;
+  --text-base--line-height: 24px;
+  --text-oracle: 16px;
+  --text-oracle--line-height: 26px;
+  --text-lg: 18px;
+  --text-lg--line-height: 28px;
+  --text-xl: 22px;
+  --text-xl--line-height: 28px;
+
+  --font-weight-*: initial;
+  --font-weight-normal: 400;
+  --font-weight-semibold: 600;
+
+  --radius-*: initial;
   --radius-control: 2px;
   --radius-popover: 4px;
+  /* Scryfall's printed-card corner. */
+  --radius-card: 4.75% / 3.5%;
+
+  --shadow-*: initial;
+  --shadow-float: 0 1px 2px rgb(34 38 43 / 0.08), 0 8px 24px rgb(34 38 43 / 0.12);
+
+  --animate-*: initial;
+  --animate-caret: caret 1s steps(2, start) infinite;
+  --animate-sheet-in-right: sheet-in-right 160ms ease-out;
+  --animate-sheet-in-left: sheet-in-left 160ms ease-out;
+  --animate-fade-in: fade-in 120ms ease-out;
+
+  @keyframes caret {
+    to {
+      visibility: hidden;
+    }
+  }
+  @keyframes sheet-in-right {
+    from {
+      transform: translateX(16px);
+      opacity: 0;
+    }
+  }
+  @keyframes sheet-in-left {
+    from {
+      transform: translateX(-16px);
+      opacity: 0;
+    }
+  }
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+    }
+  }
 }
 
-body {
-  background: var(--color-surface);
-  color: var(--color-ink);
-  font-family: system-ui, sans-serif;
-  font-size: 15px;
-  line-height: 24px;
+@theme inline {
+  --font-sans: var(--font-public-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-serif: var(--font-source-serif), Georgia, "Times New Roman", serif;
 }
 
-:focus-visible {
-  outline: 2px solid var(--color-accent);
-  outline-offset: 2px;
+:root {
+  color-scheme: light;
+}
+
+/* Night table: deep forest, lifted green-black card stock, and softened brass. */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --color-surface: #15241f;
+  --color-panel: #20322b;
+  --color-ink: #e7ede6;
+  --color-muted: #b5c4b8;
+  --color-rule: #3d5147;
+  --color-rule-strong: #63776b;
+  --color-accent: #91c9a6;
+  --color-accent-strong: #a5d7b5;
+  --color-accent-wash: #294539;
+  --color-hover: #2a3b33;
+  --color-placeholder: #25372f;
+  --color-brass: #c6aa73;
+  --color-river: #8fc5d5;
+  --color-action-ink: #14231d;
+  --color-danger-ink: #2d1716;
+  --color-overlay: #071410;
+  --color-rail: #10221d;
+  --color-rail-ink: #f3f4e9;
+  --color-rail-muted: #bdccc0;
+  --color-rail-rule: #34493f;
+  --color-rail-hover: #1c3229;
+  --color-danger: #f29a8f;
+  --color-danger-strong: #ffc1b8;
+  --color-danger-wash: #4a2c2a;
+  --shadow-float: 0 1px 2px rgb(0 0 0 / 0.24), 0 8px 24px rgb(0 0 0 / 0.42);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    color-scheme: dark;
+    --color-surface: #15241f;
+    --color-panel: #20322b;
+    --color-ink: #e7ede6;
+    --color-muted: #b5c4b8;
+    --color-rule: #3d5147;
+    --color-rule-strong: #63776b;
+    --color-accent: #91c9a6;
+    --color-accent-strong: #a5d7b5;
+    --color-accent-wash: #294539;
+    --color-hover: #2a3b33;
+    --color-placeholder: #25372f;
+    --color-brass: #c6aa73;
+    --color-river: #8fc5d5;
+    --color-action-ink: #14231d;
+    --color-danger-ink: #2d1716;
+    --color-overlay: #071410;
+    --color-rail: #10221d;
+    --color-rail-ink: #f3f4e9;
+    --color-rail-muted: #bdccc0;
+    --color-rail-rule: #34493f;
+    --color-rail-hover: #1c3229;
+    --color-danger: #f29a8f;
+    --color-danger-strong: #ffc1b8;
+    --color-danger-wash: #4a2c2a;
+    --shadow-float: 0 1px 2px rgb(0 0 0 / 0.24), 0 8px 24px rgb(0 0 0 / 0.42);
+  }
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    background: var(--color-surface);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    font-size: var(--text-base);
+    line-height: var(--text-base--line-height);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+  }
+
+  ::selection {
+    background: var(--color-accent-wash);
+    color: var(--color-ink);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+/* Answer text rendered by components/markdown.tsx. */
+@layer components {
+  .dark-field :focus-visible {
+    outline-color: var(--color-rail-ink);
+  }
+
+  .prose-answer {
+    overflow-wrap: anywhere;
+  }
+  .prose-answer > * + * {
+    margin-top: 12px;
+  }
+  .prose-answer :where(h1, h2, h3, h4) {
+    font-weight: 600;
+    margin-top: 20px;
+  }
+  .prose-answer :where(h1, h2) {
+    font-size: var(--text-lg);
+    line-height: var(--text-lg--line-height);
+  }
+  .prose-answer :where(h3, h4) {
+    font-size: var(--text-base);
+  }
+  .prose-answer :where(ul) {
+    list-style: disc;
+    padding-left: 20px;
+  }
+  .prose-answer :where(ol) {
+    list-style: decimal;
+    padding-left: 24px;
+  }
+  .prose-answer :where(li + li, li > ul, li > ol) {
+    margin-top: 4px;
+  }
+  .prose-answer :where(li)::marker {
+    color: var(--color-muted);
+  }
+  .prose-answer :where(strong) {
+    font-weight: 600;
+  }
+  .prose-answer :where(a) {
+    color: var(--color-accent);
+    text-decoration: underline;
+    text-decoration-color: color-mix(in srgb, var(--color-accent) 40%, transparent);
+    text-underline-offset: 3px;
+  }
+  .prose-answer :where(a:hover) {
+    text-decoration-color: var(--color-accent);
+  }
+  .prose-answer :where(code) {
+    font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+    font-size: 0.9em;
+    background: var(--color-surface);
+    border: 1px solid var(--color-rule);
+    border-radius: var(--radius-control);
+    padding: 0 4px;
+  }
+  .prose-answer :where(pre) {
+    background: var(--color-surface);
+    border: 1px solid var(--color-rule);
+    border-radius: var(--radius-control);
+    padding: 12px 16px;
+    overflow-x: auto;
+    font-size: var(--text-sm);
+    line-height: var(--text-sm--line-height);
+  }
+  .prose-answer :where(pre code) {
+    border: 0;
+    padding: 0;
+    background: none;
+  }
+  .prose-answer :where(blockquote) {
+    border-left: 2px solid var(--color-rule);
+    padding-left: 12px;
+    color: var(--color-muted);
+  }
+  .prose-answer :where(hr) {
+    border: 0;
+    border-top: 1px solid var(--color-rule);
+  }
+  .prose-answer :where(table) {
+    border-collapse: collapse;
+    font-size: var(--text-sm);
+    line-height: var(--text-sm--line-height);
+    display: block;
+    overflow-x: auto;
+  }
+  .prose-answer :where(th, td) {
+    border-bottom: 1px solid var(--color-rule);
+    padding: 6px 12px 6px 0;
+    text-align: left;
+    vertical-align: top;
+  }
+  .prose-answer :where(th) {
+    font-weight: 600;
+  }
+  /* A card name the server confirmed; opens the card panel. */
+  .prose-answer .card-ref {
+    display: inline;
+    padding: 0;
+    font: inherit;
+    font-weight: 600;
+    color: var(--color-accent);
+    text-align: inherit;
+    text-decoration: underline;
+    text-decoration-color: color-mix(in srgb, var(--color-accent) 35%, transparent);
+    text-decoration-thickness: 1px;
+    text-underline-offset: 3px;
+    cursor: pointer;
+    border-radius: var(--radius-control);
+  }
+  .prose-answer .card-ref:hover {
+    text-decoration-color: var(--color-accent);
+  }
 }

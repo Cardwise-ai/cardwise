@@ -17,6 +17,7 @@ DSN = os.environ.get(
     "CARDWISE_TEST_DB_URL", "postgresql://postgres:postgres@127.0.0.1:54322/postgres"
 )
 SCHEMAS = ("corpus", "app")
+FAKE_SHA256 = "0" * 64
 
 
 @pytest.fixture
@@ -33,10 +34,13 @@ async def conn() -> AsyncIterator[asyncpg.Connection]:
 
 async def _new_snapshot(conn: asyncpg.Connection, status: str = "loading") -> int:
     snapshot_id: int = await conn.fetchval(
-        "insert into corpus.snapshots (status, source_updated_at, storage_path, activated_at)"
-        " values ($1, now(), 'raw-snapshots/test', case when $1 = 'active' then now() end)"
+        "insert into corpus.snapshots"
+        " (status, source_updated_at, storage_path, activated_at, content_sha256, source_files)"
+        " values ($1, now(), 'raw-snapshots/test', case when $1 = 'active' then now() end,"
+        " $2, '{}')"
         " returning id",
         status,
+        FAKE_SHA256,
     )
     return snapshot_id
 
@@ -80,9 +84,31 @@ async def test_only_one_snapshot_can_be_active(conn: asyncpg.Connection) -> None
 async def test_active_snapshot_requires_activation_time(conn: asyncpg.Connection) -> None:
     with pytest.raises(asyncpg.CheckViolationError):
         await conn.execute(
-            "insert into corpus.snapshots (status, source_updated_at, storage_path)"
-            " values ('active', now(), 'raw-snapshots/test')"
+            "insert into corpus.snapshots"
+            " (status, source_updated_at, storage_path, content_sha256, source_files)"
+            " values ('active', now(), 'raw-snapshots/test', $1, '{}')",
+            FAKE_SHA256,
         )
+
+
+async def test_snapshot_rejects_malformed_content_hash(conn: asyncpg.Connection) -> None:
+    with pytest.raises(asyncpg.CheckViolationError):
+        await conn.execute(
+            "insert into corpus.snapshots (source_updated_at, content_sha256, source_files)"
+            " values (now(), 'not-a-hash', '{}')"
+        )
+
+
+async def test_mana_value_fits_gleemax(conn: asyncpg.Connection) -> None:
+    snapshot_id = await _new_snapshot(conn)
+    await conn.execute(
+        "insert into corpus.cards (snapshot_id, oracle_id, name, layout, is_game_card, mana_value,"
+        " type_line, legalities, scryfall_uri, search_text, payload)"
+        " values ($1, $2, 'Gleemax', 'normal', true, 1000000, 'Legendary Artifact', '{}',"
+        " 'https://scryfall.com/card/x', 'Gleemax', '{}')",
+        snapshot_id,
+        uuid4(),
+    )
 
 
 async def test_card_search_vector_includes_text(conn: asyncpg.Connection) -> None:

@@ -1,0 +1,80 @@
+name: ingest
+
+# Loads the Scryfall corpus into a Supabase project, weekly or on demand.
+# Secrets live in the GitHub environments `dev` and `prod` (docs/external-services.md). Each
+# environment only accepts its own branch: dev from `dev`, prod from `main`. The schedule runs
+# on the default branch (`dev`), loads dev, and if that succeeds starts the prod run on `main`.
+
+on:
+  schedule:
+    - cron: "17 6 * * 1"
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Supabase project to load
+        type: choice
+        options: [dev, prod]
+        default: dev
+      force:
+        description: Load even if the files are unchanged
+        type: boolean
+        default: false
+      allow_count_drift:
+        description: Skip the card count change check (look at the data first)
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+env:
+  UV_FROZEN: "1"
+
+jobs:
+  ingest:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    environment: ${{ inputs.environment || 'dev' }}
+    concurrency:
+      group: ingest-${{ inputs.environment || 'dev' }}
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@1db35dd8eee11c5894872e0b383ae6c406cf738d # v10.4.0
+        with:
+          enable-cache: true
+      - run: uv sync --package cardwise-ingest --no-dev
+      - name: Ingest
+        env:
+          CARDWISE_DATABASE_URL: ${{ secrets.CARDWISE_DATABASE_URL }}
+          CARDWISE_STORAGE_S3_ENDPOINT: ${{ secrets.CARDWISE_STORAGE_S3_ENDPOINT }}
+          CARDWISE_STORAGE_S3_REGION: ${{ secrets.CARDWISE_STORAGE_S3_REGION }}
+          CARDWISE_STORAGE_S3_ACCESS_KEY_ID: ${{ secrets.CARDWISE_STORAGE_S3_ACCESS_KEY_ID }}
+          CARDWISE_STORAGE_S3_SECRET_ACCESS_KEY: ${{ secrets.CARDWISE_STORAGE_S3_SECRET_ACCESS_KEY }}
+          FORCE: ${{ inputs.force && '--force' || '' }}
+          ALLOW_DRIFT: ${{ inputs.allow_count_drift && '--allow-count-drift' || '' }}
+          ENVIRONMENT: ${{ inputs.environment || 'dev' }}
+        run: |
+          if [ -z "$CARDWISE_DATABASE_URL" ]; then
+            echo "::error::CARDWISE_DATABASE_URL is not set in the $ENVIRONMENT environment"
+            exit 1
+          fi
+          # shellcheck disable=SC2086
+          uv run --no-sync python -m cardwise_ingest run --work-dir "$RUNNER_TEMP/bulk" $FORCE $ALLOW_DRIFT
+
+  prod:
+    # GITHUB_TOKEN may start workflow_dispatch runs; the prod environment only accepts `main`.
+    needs: ingest
+    if: github.event_name == 'schedule'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      actions: write
+    steps:
+      - name: Start the prod run on main
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: gh workflow run ingest.yml --repo "$REPO" --ref main -f environment=prod

@@ -9,14 +9,23 @@ Secrets go straight from a dashboard into Vercel, GitHub or your local `.env`. T
 | Service | Plan | Connected to the repo by | Deploys |
 |---|---|---|---|
 | Supabase `cardwise-prod` | Free | Supabase GitHub integration | Migrations and storage buckets on every push to `main` |
-| Supabase `cardwise-dev` | Free | Supabase CLI from your machine | Migrations when you run `supabase db push` |
-| Vercel `cardwise-web` | Hobby | Vercel GitHub app | Web app: production from `main`, a preview for every PR |
+| Supabase `cardwise-dev` | Free | Supabase GitHub integration | Migrations and storage buckets on every push to `dev` |
+| Vercel `cardwise-web` | Hobby | Vercel GitHub app | Web app: production from `main` (prod database), a preview for every other branch and PR (dev database) |
 | Vercel `cardwise-api` | Hobby | Vercel GitHub app | API, once the endpoints exist (Line C) |
 | Google AI Studio | Free tier | API key in Vercel | n/a |
 | OpenRouter | Free models | API key in Vercel | n/a |
 | GitHub Actions | Free | This repo | CI now; ingest, backups and live evals later |
 
-**Why the Supabase GitHub integration instead of a deploy workflow:** on every plan, the integration applies new migrations and creates the storage buckets declared in `supabase/config.toml` when `main` changes. No access token, project ID or database password has to live in GitHub. Preview branches (a database per PR) are a paid add-on, so we don't use them. CI already tests every migration against a fresh local Supabase.
+**Branches:** feature branches merge into `dev` (squash), which deploys to `cardwise-dev`. A release is a PR from `dev` into `main` (merge commit, so the two branches keep one history), which deploys to `cardwise-prod`. Every migration therefore runs on the hosted dev database before prod. A hotfix merged straight to `main` must be merged back into `dev`.
+
+| Branch | Supabase | Vercel | GitHub environment | Merge method |
+|---|---|---|---|---|
+| `dev` (default) | `cardwise-dev` | Preview | `dev` | squash |
+| `main` | `cardwise-prod` | Production | `prod` | merge commit |
+
+Both branches are protected by repo rulesets: changes only through PRs with green CI (`python`, `db`, `web`, `secrets`, `audit`), no force pushes, no deletion.
+
+**Why the Supabase GitHub integration instead of a deploy workflow:** on every plan, the integration applies new migrations and creates the storage buckets declared in `supabase/config.toml` when its production branch changes. No access token, project ID or database password has to live in GitHub. Preview branches (a database per PR) are a paid add-on, so we don't use them. CI already tests every migration against a fresh local Supabase.
 
 The integration does not deploy Auth or API settings by default. Those are set once in the dashboard (steps 5 and 6).
 
@@ -31,9 +40,7 @@ The integration does not deploy Auth or API settings by default. Those are set o
 
 ## 2. Repo protection
 
-GitHub Free organizations can't protect branches in private repos. Until the repo is public or the org is on Team, branch rules are a habit, not enforced:
-- merge to `main` only through PRs with green CI;
-- Settings → General → Pull Requests: allow squash merge only, and turn on "Automatically delete head branches".
+The repo is public, so GitHub Free enforces rulesets. Settings → Rules → Rulesets has `dev` and `main` as described above. Settings → General → Pull Requests allows squash and merge commits (each branch's ruleset narrows it to one), and deletes head branches after merge.
 
 ## 3. Supabase organization and projects
 
@@ -70,31 +77,37 @@ GitHub Free organizations can't protect branches in private repos. Until the rep
 4. **Enable integration.** The next push to `main` applies `supabase/migrations/*` and creates the `raw-snapshots` bucket.
 5. Check it: Database → Migrations lists `20261121120000_init`; Table Editor → schema `corpus` has the tables; Storage lists `raw-snapshots` as private.
 
-**Rule from now on:** change the production schema only through a migration file merged to `main`. If you edit tables in the dashboard, the migration history stops matching the repo and the next deploy fails.
+**Rule from now on:** change either schema only through a migration file merged to `dev` (then released to `main`). If you edit tables in the dashboard, the migration history stops matching the repo and the next deploy fails.
 
-## 5. Bring `cardwise-dev` up to date
+## 5. Connect the repo to `cardwise-dev`
 
-Run these from the repo root in PowerShell (Git Bash can hide the CLI's prompts):
+Same as step 4, in `cardwise-dev` → Project Settings → Integrations → GitHub Integration. The Supabase app is already installed on the repo, so GitHub won't ask again. Use the same options except:
+
+| Option | Value |
+|---|---|
+| Production branch | `dev` |
+
+The next push to `dev` applies any migration `cardwise-dev` hasn't seen and creates `raw-snapshots`. Check it the same way as step 4.
+
+If the dev database ever needs a migration by hand (for example after a reset), run from the repo root in PowerShell:
 
 ```sh
-pnpm exec supabase login                                  # opens the browser once
-pnpm exec supabase db push --remote=<dev-ref> --password <dev-db-password>
+pnpm exec supabase login                       # opens the browser once
+pnpm exec supabase db push --remote=<dev-ref> --yes
 ```
 
 Supabase CLI 3.x pushes to the local Docker database unless `--remote` is given. `<dev-ref>` is in the dev project's URL: `https://supabase.com/dashboard/project/<dev-ref>`.
 
-Then create the bucket by hand: Storage → New bucket → `raw-snapshots`, private, 50 MB file limit.
-
 ## 6. Sign-in
 
-Supabase Auth's email and password sign-in, invite-only, with no email sending. Supabase's built-in email delivers only to members of your Supabase org, at 2 emails an hour, and free SMTP providers need a domain you own. So the POC sends no email at all: you create each tester's account yourself and give them the password. GitHub or Google sign-in would also work, but each needs an OAuth app registered with that provider.
+Supabase Auth uses password sign-in and Google OAuth. Email sign-in links are still available, but Supabase's built-in email delivers only to members of your Supabase org, at 2 emails an hour, and free SMTP providers need a domain you own. The POC sends no email automatically: create each tester's account yourself. Google OAuth also needs a web client registered with Google and enabled in each Supabase project.
 
 In both projects:
 
 1. Authentication → Sign In / Providers:
    - **Allow new users to sign up: off.** Only accounts you create exist.
    - **Email** provider: on. **Confirm email: off**, so no confirmation email is sent.
-   - All other providers: off.
+   - **Google** provider: on after completing step 3 below. Other providers: off.
 2. Authentication → URL Configuration:
 
    | Field | Production | Development |
@@ -102,9 +115,20 @@ In both projects:
    | Site URL | the `cardwise-web` production URL (step 7) | `http://localhost:3000` |
    | Redirect URLs | `<web production URL>/**` | `http://localhost:3000/**` and `https://cardwise-web-*-<vercel-scope>.vercel.app/**` (previews) |
 
-3. Authentication → Users → **Add user → Create new user**: enter the email and a generated password, and tick **Auto Confirm User**. Do this for yourself in both projects and for each tester in production. Send passwords through a password manager share or Signal, not plain email. If someone forgets theirs, reset it on the same page.
+3. Configure Google sign-in once in Google Cloud, then enable it in **both** Supabase projects:
+   - In [Google Auth Platform](https://console.cloud.google.com/auth/overview), configure the consent-screen branding and audience. Add `openid`, `email`, and `profile` scopes. Add tester accounts to the audience if the app remains in testing.
+   - Create an OAuth client ID with application type **Web application**. Add the Cardwise production origin and `http://localhost:3000` under **Authorized JavaScript origins**; add each exact Vercel preview origin you intend to test.
+   - Under **Authorized redirect URIs**, add the Supabase callback shown on the Google provider page. It is normally `https://<project-ref>.supabase.co/auth/v1/callback` (use the value displayed by Supabase, not the web app callback). For local Supabase, the callback is `http://127.0.0.1:54321/auth/v1/callback`.
+   - In each Supabase project, open Authentication → Sign In / Providers → Google, enable the provider, and enter the Google **Client ID** and **Client Secret**. Supabase stores these; do not put the secret in the app, `.env`, or a `NEXT_PUBLIC_*` variable.
+   - In Supabase Authentication → URL Configuration, make sure the allowed redirect URLs cover the web app callback: `http://localhost:3000/auth/callback`, `<web production URL>/auth/callback`, and the preview callback pattern `https://cardwise-web-*-<vercel-scope>.vercel.app/auth/callback`.
+
+   The web app sends users through Supabase's PKCE callback at `/auth/callback`, exchanges the returned code for a session, and allows only same-site `next` paths. The current invite-only setting remains in force: keep **Allow new users to sign up** off unless you intend to let Google-authenticated visitors create accounts.
+
+4. Authentication → Users → **Add user → Create new user**: enter the email and a generated password, and tick **Auto Confirm User**. Do this for yourself in both projects and for each tester in production. Send passwords through a password manager share or Signal, not plain email. If someone forgets theirs, reset it on the same page.
 
 Password reset and email change by the user need email, so they wait for SMTP (after the POC, with a domain).
+
+Supabase and Google setup references: [Supabase Google sign-in](https://supabase.com/docs/guides/auth/social-sign-in/auth-google) and [Supabase redirect URLs](https://supabase.com/docs/guides/auth/redirect-urls).
 
 ## 7. Vercel: web project
 
@@ -129,27 +153,47 @@ Password reset and email change by the user need email, so they wait for SMTP (a
    | `NEXT_PUBLIC_SUPABASE_URL` | `https://<prod-ref>.supabase.co` | `https://<dev-ref>.supabase.co` |
    | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | prod publishable key | dev publishable key |
    | `NEXT_PUBLIC_API_URL` | `cardwise-api` production URL (after step 8) | `cardwise-api` preview URL, or `http://127.0.0.1:8000` |
+   | `NEXT_PUBLIC_LLM_TIER` | `free` (`paid` hides the free-tier notice) | `free` |
 
    The publishable key is under Supabase → Project Settings → API Keys (`sb_publishable_...`). It is public by design. The secret key (`sb_secret_...`, formerly `service_role`) is never used anywhere.
 
-## 8. Vercel: API project (when Line C has endpoints)
+## 8. Vercel: API project
 
-Not needed yet, because the API is still stubs. When it's time:
+The API is deployed to Vercel for dev. Production is intentionally not configured or deployed until S2 passes.
 
-1. vercel.com/new → import `cardwise` again → project name `cardwise-api`, framework **FastAPI**, root directory `api`.
-2. Project Settings → Build and Deployment → Root Directory → **Include files outside the root directory: On**. The API imports `packages/core` and `packages/llm`. Packaging the uv workspace on Vercel is untested, so the first API deploy task proves it.
-3. Function region **iad1**; Deployment Protection as above.
-4. Environment variables, all **sensitive**:
+Current dev setup:
+- Vercel project `cardwise-api` is connected to `Cardwise-ai/cardwise`, with framework **FastAPI**, root directory `api`, source files outside the root enabled, and production branch `main`.
+- The Preview deployment is available at `https://cardwise-api-git-dev-yhaliwaizman.vercel.app`; its `/healthz` returns `{"status":"ok"}` and unauthenticated `GET /v1/chats` returns 401.
+- Preview uses the dev Supabase project and transaction pooler, dev model keys, and a CORS regex for web preview origins. `cardwise-web` Preview uses this API URL.
+- Vercel Authentication stays enabled on the web project. It is disabled on the API project because browser-to-API requests cannot use the Vercel SSO flow; all `/v1` routes require a Supabase JWT, while `/healthz` is intentionally public.
+- Both Supabase JWKS endpoints currently advertise ES256 signing keys.
+
+What's in the repo:
+- `api/index.py` re-exports `cardwise_api.main:app`; `[tool.vercel] entrypoint = "index:app"` in `api/pyproject.toml` points Vercel at it.
+- `api/vercel.json` pins the region to `iad1`, lets the function run 300 s (a long answer stream) and leaves tests out of the bundle.
+
+Steps:
+
+1. Check the token signing keys on **both** Supabase projects: Project Settings → **JWT Keys**. The current key must be asymmetric (ECC P-256 or RSA). If it still says "Legacy JWT secret", click **Migrate JWT secret**, then **Rotate keys** so the new ECC key signs tokens. The API only accepts ES256/RS256 tokens checked against `<project URL>/auth/v1/.well-known/jwks.json`; it never sees a JWT secret.
+2. The project is created and connected to the repository as described above.
+3. Project Settings → Build and Deployment → Root Directory → **Include files outside the root directory: On**. The API imports `packages/core` and `packages/llm` from the uv workspace.
+4. Do not enable Vercel Authentication for this API project: it blocks browser requests from the web app. Function region is set by `vercel.json`; API authorization is enforced with Supabase JWTs.
+5. Environment variables, all **sensitive**:
 
    | Name | Production | Preview |
    |---|---|---|
    | `CARDWISE_DATABASE_URL` | prod **Transaction pooler** URL (port 6543) | dev Transaction pooler URL |
    | `CARDWISE_SUPABASE_URL` | `https://<prod-ref>.supabase.co` | `https://<dev-ref>.supabase.co` |
-   | `CARDWISE_WEB_ORIGIN` | web production URL | web preview URL pattern |
+   | `CARDWISE_WEB_ORIGIN` | web production URL, e.g. `https://cardwise-web.vercel.app` (comma-separate several) | web preview branch URL(s), or leave unset and use the regex below |
+   | `CARDWISE_WEB_ORIGIN_REGEX` | unset | `^https://cardwise-web-[a-z0-9-]+-<team-slug>\.vercel\.app$` |
    | `CARDWISE_GEMINI_API_KEY` | prod key | dev key |
    | `CARDWISE_OPENROUTER_API_KEY` | prod key | dev key |
 
-   The pooler URL is under Supabase → **Connect** → Transaction pooler; put the database password into it. The API verifies tokens with the project's public keys at `<project URL>/auth/v1/.well-known/jwks.json`, so no JWT secret is needed.
+   The pooler URL is under Supabase → **Connect** → Transaction pooler; put the database password into it. Use port **6543**: the API opens one connection per request and never prepares named statements, which is what the transaction pooler needs (ADR 0007). `VERCEL_ENV` tells the app it is deployed: it then refuses to start without `CARDWISE_DATABASE_URL` and an https `CARDWISE_SUPABASE_URL`, sends HSTS and hides `/openapi.json`. Optional tuning: `CARDWISE_LOG_LEVEL`, `CARDWISE_MESSAGES_PER_HOUR` (default 20), `CARDWISE_CONCURRENT_STREAMS` (default 1).
+6. Deploy a Preview, then check `https://<api-url>/healthz` returns `{"status":"ok"}` and `GET /v1/chats` without a token returns 401 with the JSON error shape. The dev Preview currently passes both checks.
+7. Set `NEXT_PUBLIC_API_URL` on `cardwise-web` Preview to the API Preview URL. The dev Preview currently uses `https://cardwise-api-git-dev-yhaliwaizman.vercel.app`; do not set the production web value until S2 passes.
+
+If the build can't install the workspace packages, fall back to a pinned requirements file: `uv export --package cardwise-api --no-dev --frozen --no-hashes -o api/requirements.txt` plus copying `packages/*/src` into the bundle, and record what worked here.
 
 ## 9. Model providers
 
@@ -166,24 +210,40 @@ Not needed yet, because the API is still stubs. When it's time:
 
 ## 10. GitHub Actions secrets
 
-**None are needed now.** CI runs against a local Supabase in Docker with the fake model, and Supabase and Vercel deploy through their own GitHub apps.
+CI needs none: it runs against a local Supabase in Docker with the fake model. The `ingest` workflow needs a GitHub **Environment** per Supabase project. `dev` and `prod` exist already (repo → Settings → Environments); `dev` only accepts runs from the `dev` branch and `prod` only from `main`. `scripts/sync_env.py` (below) fills them in for you. By hand, add these secrets to **each** environment, with that project's values:
 
-When these workflows are built, create a GitHub **Environment** named `prod` (repo → Settings → Environments). Restrict it to the `main` branch, then add:
-
-| Secret | Workflow | Value |
+| Secret | Workflow | Where to get it |
 |---|---|---|
-| `CARDWISE_DATABASE_URL` | ingest, chat backups | prod **Session pooler** URL (port 5432). GitHub runners can't reach the IPv6-only direct connection, and the transaction pooler breaks long loads. |
-| `CARDWISE_STORAGE_S3_ENDPOINT` | ingest | Supabase → Project Settings → Storage → S3 connection endpoint |
-| `CARDWISE_STORAGE_S3_REGION` | ingest | same page |
-| `CARDWISE_STORAGE_S3_ACCESS_KEY_ID` / `CARDWISE_STORAGE_S3_SECRET_ACCESS_KEY` | ingest | same page → **New access key**. These keys reach Storage only. |
-| `CARDWISE_BACKUP_AGE_RECIPIENT` | chat backups | the public key from `age-keygen -o cardwise-backup.key`. Keep `cardwise-backup.key` offline, never in GitHub. |
-| `CARDWISE_GEMINI_API_KEY` / `CARDWISE_OPENROUTER_API_KEY` | live evals | dev keys |
+| `CARDWISE_DATABASE_URL` | ingest, chat backups | Supabase → **Connect** → Connection string → **Session pooler** (port 5432), with the database password filled in. It looks like `postgresql://postgres.<ref>:<password>@aws-0-<region>.pooler.supabase.com:5432/postgres`. GitHub runners can't reach the IPv6-only direct connection, and the transaction pooler breaks the session lock ingest takes. |
+| `CARDWISE_STORAGE_S3_ENDPOINT` | ingest | Project Settings → Storage → **S3 Connection** → Endpoint (`https://<ref>.storage.supabase.co/storage/v1/s3`) |
+| `CARDWISE_STORAGE_S3_REGION` | ingest | same section → Region |
+| `CARDWISE_STORAGE_S3_ACCESS_KEY_ID` / `CARDWISE_STORAGE_S3_SECRET_ACCESS_KEY` | ingest | same page → **S3 Access Keys** → New access key. The secret is shown once. These keys can read and write every bucket in the project but nothing else. |
+| `CARDWISE_BACKUP_AGE_RECIPIENT` | chat backups (later) | the public key from `age-keygen -o cardwise-backup.key`. Keep `cardwise-backup.key` offline, never in GitHub. |
+| `CARDWISE_GEMINI_API_KEY` / `CARDWISE_OPENROUTER_API_KEY` | live evals (later) | dev keys |
 
-Dependabot PRs can't read secrets, so jobs that use them run only on `main` or by hand.
+The S3 secrets are optional: without them ingest still loads the database and logs that the raw files were not archived.
+
+`ingest` runs every Monday on `dev` into the dev project; if that succeeds it starts a prod run on `main`. Run it by hand from Actions → ingest → **Run workflow**: pick branch `dev` with environment `dev`, or branch `main` with environment `prod` (any other pairing is refused by the environment). A run on unchanged files does nothing. If the card count moves more than 5%, the run fails and the live corpus stays; check the data, then rerun with **allow count drift**.
+
+Dependabot PRs can't read secrets, so jobs that use them run only on `dev`, `main` or by hand.
+
+### Sync script
+
+`scripts/sync_env.py` sets the GitHub environment secrets above and the two `NEXT_PUBLIC_SUPABASE_*` Vercel variables (step 7) for both projects. It reads the refs and Vercel scope from `.env.hosted`, looks up the pooler host, region and publishable key through the Supabase Management API, and asks only for what Supabase never shows again: the database password and the S3 access key pair. It tests each value against the live service before writing it, writes nothing to disk, and is safe to rerun. Run it from the repo root in PowerShell after `pnpm exec supabase login`, `gh auth login` and `npx vercel login`:
+
+```sh
+uv run python scripts/sync_env.py --dry-run     # check only
+uv run python scripts/sync_env.py               # both projects
+uv run python scripts/sync_env.py --env dev     # one project
+```
+
+An empty answer skips that group. Rotating the database password or an S3 key means rerunning it.
 
 ## 11. Local `.env`
 
 Copy `.env.example` to `.env` (API) and `apps/web/.env.local` (web). For local work, point them at the local stack: `pnpm exec supabase start` prints the URLs and the local publishable key. Model keys stay empty to use the fake model, or hold the dev keys.
+
+The API only accepts asymmetric (ES256/RS256) tokens. If the local stack still signs with the legacy HS256 secret, generate a key with `pnpm exec supabase gen signing-key --algorithm ES256` (it writes `supabase/signing_keys.json`; never commit it), set `signing_keys_path = "./signing_keys.json"` under `[auth]` in `supabase/config.toml` locally, and restart the stack. Run the API with `uv run --with uvicorn uvicorn cardwise_api.main:app --reload --port 8000`.
 
 ## Values to send back
 
