@@ -52,7 +52,7 @@ export function SignInForm({
       {error ? (
         <p
           role="alert"
-          className="rounded-control border border-danger/30 bg-danger-wash px-3 py-2 text-sm"
+          className="rounded-field border border-danger/30 bg-danger-wash px-3 py-2 text-sm"
         >
           {error}
         </p>

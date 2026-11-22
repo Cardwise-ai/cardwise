@@ -1,37 +1,37 @@
 @import "tailwindcss";
 
 /*
- * The desk borrows its colors from a playmat, card stock, and old brass hardware. Mana colors
- * remain reserved for actual mana symbols and color-identity pips.
+ * Ultraviolet is the deck-box colour: solid on the rail, and the one interactive accent. In dark
+ * mode the page is true black, like a card's printed border, so card art carries the colour.
+ * Mana colours remain reserved for mana symbols and colour-identity pips. See docs/style-guide.md.
  */
 @theme {
   --color-*: initial;
   --color-white: #ffffff;
   --color-transparent: transparent;
-  --color-surface: #e6ede5;
-  --color-panel: #fbfaf4;
-  --color-ink: #1b2a25;
-  --color-muted: #4e625a;
-  --color-rule: #c7d3c9;
-  --color-rule-strong: #9cab9f;
-  --color-accent: #1d4b40;
-  --color-accent-strong: #14382f;
-  --color-accent-wash: #d9e7dd;
-  --color-hover: #dde7dd;
-  --color-placeholder: #e1e9e1;
-  --color-brass: #b18a3c;
-  --color-river: #36798a;
+  --color-surface: #f4f2f7;
+  --color-panel: #ffffff;
+  --color-ink: #18141f;
+  --color-muted: #5b5468;
+  --color-rule: #ddd8e5;
+  --color-rule-strong: #8b829c;
+  --color-accent: #5a2ec0;
+  --color-accent-strong: #46209e;
+  --color-accent-wash: #ece6fb;
+  --color-hover: #ece9f2;
+  --color-placeholder: #e6e2ee;
+  --color-signal: #d6c6ff;
   --color-action-ink: #ffffff;
   --color-danger-ink: #ffffff;
-  --color-overlay: #10211c;
-  --color-rail: #1d4b40;
-  --color-rail-ink: #fbfaf4;
-  --color-rail-muted: #c8d8ca;
-  --color-rail-rule: #507266;
-  --color-rail-hover: #2a5a4d;
-  --color-danger: #9c2f2a;
-  --color-danger-strong: #7f2622;
-  --color-danger-wash: #f8ecea;
+  --color-overlay: #140a2b;
+  --color-rail: #24124f;
+  --color-rail-ink: #ffffff;
+  --color-rail-muted: #cdc2ea;
+  --color-rail-rule: #46357d;
+  --color-rail-hover: #35226e;
+  --color-danger: #b0261f;
+  --color-danger-strong: #8a1c17;
+  --color-danger-wash: #fcedeb;
 
   /* Mana colors appear only inside mana symbols and color-identity pips. */
   --color-mana-w: #f6f1d3;
@@ -49,22 +49,33 @@
   --text-oracle: 16px;
   --text-oracle--line-height: 26px;
   --text-lg: 18px;
-  --text-lg--line-height: 28px;
+  --text-lg--line-height: 26px;
   --text-xl: 22px;
   --text-xl--line-height: 28px;
+  --text-2xl: 28px;
+  --text-2xl--line-height: 32px;
 
   --font-weight-*: initial;
   --font-weight-normal: 400;
   --font-weight-semibold: 600;
+  --font-weight-bold: 750;
 
+  --tracking-*: initial;
+  --tracking-display: -0.035em;
+  --tracking-tight: -0.015em;
+
+  /* Shape follows role: small controls, softer fields, rounder floating sheets. */
   --radius-*: initial;
-  --radius-control: 2px;
-  --radius-popover: 4px;
+  --radius-control: 6px;
+  --radius-popover: 10px;
+  --radius-field: 14px;
+  --radius-sheet: 18px;
+  --radius-pill: 999px;
   /* Scryfall's printed-card corner. */
   --radius-card: 4.75% / 3.5%;
 
   --shadow-*: initial;
-  --shadow-float: 0 1px 2px rgb(34 38 43 / 0.08), 0 8px 24px rgb(34 38 43 / 0.12);
+  --shadow-float: 0 0 0 1px rgb(36 18 79 / 0.06), 0 12px 32px rgb(36 18 79 / 0.16);
 
   --animate-*: initial;
   --animate-caret: caret 1s steps(2, start) infinite;
@@ -97,75 +108,74 @@
 }
 
 @theme inline {
-  --font-sans: var(--font-public-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-schibsted), ui-sans-serif, system-ui, sans-serif;
   --font-serif: var(--font-source-serif), Georgia, "Times New Roman", serif;
 }
 
 :root {
-  color-scheme: light;
+  /* "only" keeps browser auto-dark features from repainting the light theme; we ship a dark one. */
+  color-scheme: only light;
+  accent-color: var(--color-accent);
 }
 
-/* Night table: deep forest, lifted green-black card stock, and softened brass. */
+/* Black border: true-black page and rail, one raised grey for fields, lavender accent. */
 :root[data-theme="dark"] {
   color-scheme: dark;
-  --color-surface: #15241f;
-  --color-panel: #20322b;
-  --color-ink: #e7ede6;
-  --color-muted: #b5c4b8;
-  --color-rule: #3d5147;
-  --color-rule-strong: #63776b;
-  --color-accent: #91c9a6;
-  --color-accent-strong: #a5d7b5;
-  --color-accent-wash: #294539;
-  --color-hover: #2a3b33;
-  --color-placeholder: #25372f;
-  --color-brass: #c6aa73;
-  --color-river: #8fc5d5;
-  --color-action-ink: #14231d;
-  --color-danger-ink: #2d1716;
-  --color-overlay: #071410;
-  --color-rail: #10221d;
-  --color-rail-ink: #f3f4e9;
-  --color-rail-muted: #bdccc0;
-  --color-rail-rule: #34493f;
-  --color-rail-hover: #1c3229;
-  --color-danger: #f29a8f;
-  --color-danger-strong: #ffc1b8;
-  --color-danger-wash: #4a2c2a;
-  --shadow-float: 0 1px 2px rgb(0 0 0 / 0.24), 0 8px 24px rgb(0 0 0 / 0.42);
+  --color-surface: #000000;
+  --color-panel: #141414;
+  --color-ink: #f4f2f7;
+  --color-muted: #a9a3b5;
+  --color-rule: #2b2b2e;
+  --color-rule-strong: #6c6874;
+  --color-accent: #b79cff;
+  --color-accent-strong: #cdbbff;
+  --color-accent-wash: #21183a;
+  --color-hover: #1c1c1e;
+  --color-placeholder: #161616;
+  --color-signal: #b79cff;
+  --color-action-ink: #000000;
+  --color-danger-ink: #000000;
+  --color-overlay: #000000;
+  --color-rail: #000000;
+  --color-rail-ink: #f4f2f7;
+  --color-rail-muted: #a9a3b5;
+  --color-rail-rule: #262628;
+  --color-rail-hover: #17151c;
+  --color-danger: #ff8f85;
+  --color-danger-strong: #ffb8b1;
+  --color-danger-wash: #2b1311;
+  --shadow-float: 0 0 0 1px rgb(255 255 255 / 0.06), 0 12px 32px rgb(0 0 0 / 0.7);
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme]) {
     color-scheme: dark;
-    --color-surface: #15241f;
-    --color-panel: #20322b;
-    --color-ink: #e7ede6;
-    --color-muted: #b5c4b8;
-    --color-rule: #3d5147;
-    --color-rule-strong: #63776b;
-    --color-accent: #91c9a6;
-    --color-accent-strong: #a5d7b5;
-    --color-accent-wash: #294539;
-    --color-hover: #2a3b33;
-    --color-placeholder: #25372f;
-    --color-brass: #c6aa73;
-    --color-river: #8fc5d5;
-    --color-action-ink: #14231d;
-    --color-danger-ink: #2d1716;
-    --color-overlay: #071410;
-    --color-rail: #10221d;
-    --color-rail-ink: #f3f4e9;
-    --color-rail-muted: #bdccc0;
-    --color-rail-rule: #34493f;
-    --color-rail-hover: #1c3229;
-    --color-danger: #f29a8f;
-    --color-danger-strong: #ffc1b8;
-    --color-danger-wash: #4a2c2a;
-    --shadow-float: 0 1px 2px rgb(0 0 0 / 0.24), 0 8px 24px rgb(0 0 0 / 0.42);
+    --color-surface: #000000;
+    --color-panel: #141414;
+    --color-ink: #f4f2f7;
+    --color-muted: #a9a3b5;
+    --color-rule: #2b2b2e;
+    --color-rule-strong: #6c6874;
+    --color-accent: #b79cff;
+    --color-accent-strong: #cdbbff;
+    --color-accent-wash: #21183a;
+    --color-hover: #1c1c1e;
+    --color-placeholder: #161616;
+    --color-signal: #b79cff;
+    --color-action-ink: #000000;
+    --color-danger-ink: #000000;
+    --color-overlay: #000000;
+    --color-rail: #000000;
+    --color-rail-ink: #f4f2f7;
+    --color-rail-muted: #a9a3b5;
+    --color-rail-rule: #262628;
+    --color-rail-hover: #17151c;
+    --color-danger: #ff8f85;
+    --color-danger-strong: #ffb8b1;
+    --color-danger-wash: #2b1311;
+    --shadow-float: 0 0 0 1px rgb(255 255 255 / 0.06), 0 12px 32px rgb(0 0 0 / 0.7);
   }
 }
-
 @layer base {
   html {
     -webkit-text-size-adjust: 100%;
@@ -184,6 +194,15 @@
   :focus-visible {
     outline: 2px solid var(--color-accent);
     outline-offset: 2px;
+  }
+
+  /* Chrome paints autofilled fields light blue or yellow regardless of the theme. */
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:focus {
+    -webkit-text-fill-color: var(--color-ink);
+    caret-color: var(--color-ink);
+    box-shadow: 0 0 0 1000px var(--color-panel) inset;
   }
 
   ::selection {
@@ -215,7 +234,8 @@
     margin-top: 12px;
   }
   .prose-answer :where(h1, h2, h3, h4) {
-    font-weight: 600;
+    font-weight: 700;
+    letter-spacing: var(--tracking-tight);
     margin-top: 20px;
   }
   .prose-answer :where(h1, h2) {
@@ -262,7 +282,7 @@
   .prose-answer :where(pre) {
     background: var(--color-surface);
     border: 1px solid var(--color-rule);
-    border-radius: var(--radius-control);
+    border-radius: var(--radius-popover);
     padding: 12px 16px;
     overflow-x: auto;
     font-size: var(--text-sm);

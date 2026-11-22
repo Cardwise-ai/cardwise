@@ -1,5 +1,6 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, type Page, test } from "@playwright/test";
+import { THEME_COLORS } from "../src/lib/theme";
 import { SEEDED_CHAT_ID } from "../src/mocks/db";
 import { signIn } from "./helpers";
 
@@ -26,6 +27,9 @@ test("theme toggle follows system, saves explicit choices, and restores system m
   await page.getByRole("button", { name: /^Theme: System/ }).click();
   await expect(root).toHaveAttribute("data-theme-mode", "light");
   await expect(root).toHaveAttribute("data-theme", "light");
+  for (const meta of await page.locator('meta[name="theme-color"]').all()) {
+    await expect(meta).toHaveAttribute("content", THEME_COLORS.light);
+  }
   expect(await page.evaluate(() => localStorage.getItem("cardwise.theme"))).toBe("light");
 
   await page.reload();
@@ -92,3 +96,30 @@ for (const theme of ["light", "dark"] as const) {
     await expectNoAxeViolations(page);
   });
 }
+
+test("a saved theme paints before the app's JavaScript loads", async ({ page }) => {
+  await page.emulateMedia({ colorScheme: "light" });
+  await page.goto("/sign-in");
+  await page.evaluate(() => localStorage.setItem("cardwise.theme", "dark"));
+  await page.route("**/_next/static/**/*.js", (route) => route.abort());
+  await page.reload();
+
+  const root = page.locator("html");
+  await expect(root).toHaveAttribute("data-theme", "dark");
+  expect(await root.evaluate((element) => getComputedStyle(element).colorScheme)).toBe("dark");
+  for (const meta of await page.locator('meta[name="theme-color"]').all()) {
+    await expect(meta).toHaveAttribute("content", THEME_COLORS.dark);
+  }
+  await expect(page.locator('meta[name="color-scheme"]')).toHaveAttribute("content", "light dark");
+});
+
+test("the composer shows a focus ring", async ({ page }) => {
+  await signIn(page);
+  await page.getByLabel("Message").focus();
+  const box = page.locator("form > div").filter({ has: page.getByLabel("Message") });
+  const outline = await box.evaluate((element) => {
+    const style = getComputedStyle(element);
+    return `${style.outlineStyle} ${style.outlineWidth}`;
+  });
+  expect(outline).toBe("solid 2px");
+});

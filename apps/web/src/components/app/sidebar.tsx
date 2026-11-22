@@ -50,7 +50,7 @@ function ChatListBody() {
     <>
       {groupChats(chats).map((group) => (
         <section key={group.label} aria-labelledby={`group-${group.label}`} className="mb-4">
-          <h2 id={`group-${group.label}`} className="px-4 pb-1 text-sm text-rail-muted">
+          <h2 id={`group-${group.label}`} className="px-4.5 pb-1 text-sm text-rail-muted">
             {group.label}
           </h2>
           <ul>
@@ -61,17 +61,15 @@ function ChatListBody() {
                 <li
                   key={chat.id}
                   className={cx(
-                    "group relative flex items-center border-l-2",
-                    active
-                      ? "border-brass bg-rail-hover"
-                      : "border-transparent hover:bg-rail-hover",
+                    "group relative mx-2 flex items-center rounded-control",
+                    active ? "bg-rail-hover" : "hover:bg-rail-hover",
                   )}
                 >
                   <Link
                     href={href}
                     aria-current={active ? "page" : undefined}
                     className={cx(
-                      "block min-w-0 flex-1 truncate py-1.5 pr-1 pl-3.5 text-rail-ink focus-visible:outline-offset-[-2px]",
+                      "block min-w-0 flex-1 truncate py-1.5 pr-1 pl-2.5 text-rail-ink focus-visible:outline-offset-[-2px]",
                       active ? "font-semibold" : "text-rail-muted",
                     )}
                   >

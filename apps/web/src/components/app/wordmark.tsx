@@ -1,11 +1,13 @@
-/** The Cardwise name with its mark: a card outline in the accent green or brass on dark fields. */
+/** The Cardwise name with its mark: a card outline in ultraviolet, or lilac signal on dark fields. */
 export function Wordmark({ inverse = false }: { inverse?: boolean }) {
   return (
-    <span className={`inline-flex items-center gap-2 font-semibold ${inverse ? "text-white" : ""}`}>
+    <span
+      className={`inline-flex items-center gap-2 font-bold tracking-tight ${inverse ? "text-white" : ""}`}
+    >
       <svg
         aria-hidden
         viewBox="0 0 16 20"
-        className={`h-5 w-4 ${inverse ? "text-brass" : "text-accent"}`}
+        className={`h-5 w-4 ${inverse ? "text-signal" : "text-accent"}`}
       >
         <rect
           x="0.75"

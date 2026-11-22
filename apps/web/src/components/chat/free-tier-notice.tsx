@@ -63,7 +63,7 @@ export function FreeTierNotice({ className }: { className?: string }) {
       role="note"
       aria-label="About free model tiers"
       className={cx(
-        "flex items-start gap-2 rounded-control border border-rule bg-surface py-1 pr-1 pl-3 text-sm text-muted",
+        "flex items-start gap-2 rounded-field border border-rule bg-surface py-1 pr-1 pl-3 text-sm text-muted",
         className,
       )}
     >

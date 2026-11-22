@@ -124,7 +124,7 @@ function FaceText({
           id={headingId}
           tabIndex={headingId ? -1 : undefined}
           className={cx(
-            "font-serif font-semibold text-balance focus:outline-none",
+            "font-bold tracking-tight text-balance focus:outline-none",
             level === "h2" ? "text-xl" : "text-lg",
           )}
         >
@@ -132,7 +132,7 @@ function FaceText({
         </Heading>
         <ManaCost cost={manaCost} className="mt-1 shrink-0" />
       </div>
-      <p className="mt-1 font-serif text-base text-muted">{typeLine}</p>
+      <p className="mt-1 text-base text-muted">{typeLine}</p>
       {oracleText ? (
         <div className="mt-3">
           <OracleText text={oracleText} />
@@ -183,7 +183,7 @@ function CardFacts({ card }: { card: CardDetail }) {
             {card.tags.map((tag) => (
               <li
                 key={tag.slug}
-                className="rounded-control border border-rule bg-surface px-1.5 leading-[22px]"
+                className="rounded-pill border border-rule bg-surface px-2.5 leading-[22px]"
               >
                 {tag.label}
               </li>
@@ -303,7 +303,7 @@ function CardBody({ card, headingId }: { card: CardDetail; headingId: string }) 
             <h2
               id={headingId}
               tabIndex={-1}
-              className="font-serif text-xl font-semibold focus:outline-none"
+              className="text-xl font-bold tracking-tight focus:outline-none"
             >
               {card.name}
             </h2>
