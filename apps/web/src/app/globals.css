@@ -102,7 +102,9 @@
 }
 
 :root {
-  color-scheme: light;
+  /* "only" keeps browser auto-dark features from repainting the light theme; we ship a dark one. */
+  color-scheme: only light;
+  accent-color: var(--color-accent);
 }
 
 /* Night table: deep forest, lifted green-black card stock, and softened brass. */
@@ -184,6 +186,15 @@
   :focus-visible {
     outline: 2px solid var(--color-accent);
     outline-offset: 2px;
+  }
+
+  /* Chrome paints autofilled fields light blue or yellow regardless of the theme. */
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:focus {
+    -webkit-text-fill-color: var(--color-ink);
+    caret-color: var(--color-ink);
+    box-shadow: 0 0 0 1000px var(--color-panel) inset;
   }
 
   ::selection {
