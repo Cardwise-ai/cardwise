@@ -76,6 +76,6 @@ export const staticSecurityHeaders: ReadonlyArray<{ key: string; value: string }
   {
     key: "Permissions-Policy",
     value:
-      "accelerometer=(), autoplay=(), browsing-topics=(), camera=(), display-capture=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), midi=(), payment=(), usb=()",
+      "accelerometer=(), autoplay=(), camera=(), display-capture=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), midi=(), payment=(), usb=()",
   },
 ];
