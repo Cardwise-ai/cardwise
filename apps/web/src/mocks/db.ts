@@ -214,12 +214,6 @@ export const db = {
     if (!chat) return;
     chat.messages.push(message);
     chat.updated_at = message.created_at;
-    if (chat.title === "New chat" && message.role === "user") {
-      chat.title =
-        message.content.length > 48
-          ? `${message.content.slice(0, 47).trimEnd()}…`
-          : message.content;
-    }
   },
   getCard(oracleId: string): CardDetail | undefined {
     return mockCards.find((card) => card.oracle_id === oracleId);

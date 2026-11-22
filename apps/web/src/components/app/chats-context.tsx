@@ -13,6 +13,7 @@ import {
 import { getApiClient } from "@/lib/api/browser";
 import type { Chat } from "@/lib/api/client";
 import { createChat, deleteChat, listChats, renameChat } from "@/lib/api/endpoints";
+import { chatTitle } from "@/lib/format";
 
 type LoadState = "loading" | "ready" | "error";
 
@@ -20,10 +21,11 @@ interface ChatsContextValue {
   chats: Chat[];
   state: LoadState;
   reload: () => void;
-  create: () => Promise<Chat>;
+  /** Creates a chat titled after the message that starts it. */
+  create: (firstMessage: string) => Promise<Chat>;
   rename: (chatId: string, title: string) => Promise<void>;
   remove: (chatId: string) => Promise<void>;
-  /** Moves a chat to the top after a message, and picks up a server-generated title. */
+  /** Moves a chat to the top after a message, and refreshes the list. */
   touch: (chatId: string) => void;
   /** Adds a chat fetched on its own, such as one past the first page of the list. */
   include: (chat: Chat) => void;
@@ -80,8 +82,8 @@ export function ChatsProvider({ children }: { children: ReactNode }) {
       chats,
       state,
       reload: () => void load("reload"),
-      async create() {
-        const chat = await createChat(getApiClient());
+      async create(firstMessage) {
+        const chat = await createChat(getApiClient(), chatTitle(firstMessage));
         setChats((current) => [chat, ...current.filter((c) => c.id !== chat.id)]);
         return chat;
       },

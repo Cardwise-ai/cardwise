@@ -29,7 +29,7 @@ export function NewChat() {
     setBusy(true);
     setError(null);
     try {
-      const chat = await create();
+      const chat = await create(text);
       setPendingMessage(chat.id, text);
       setDraft("");
       setBusy(false);

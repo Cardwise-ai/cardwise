@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 import { describeSymbol, parseSymbols } from "@/components/cards/mana";
 import type { Chat } from "@/lib/api/client";
 import { contrastRatio, darkPalette, palette } from "./contrast";
-import { groupChats, rateLimitMessage } from "./format";
+import { chatTitle, groupChats, rateLimitMessage } from "./format";
 
 describe("design tokens", () => {
   const css = readFileSync(resolve(process.cwd(), "src/app/globals.css"), "utf8");
@@ -118,5 +118,23 @@ describe("rateLimitMessage", () => {
 
   it("tells a short wait apart from the hourly limit", () => {
     expect(rateLimitMessage(5)).toMatch(/still answering another message.*few seconds\.$/);
+  });
+});
+
+describe("chatTitle", () => {
+  it("uses a short first message as it is, on one line", () => {
+    expect(chatTitle("  Ramp for\n  Esika?  ")).toBe("Ramp for Esika?");
+  });
+
+  it("cuts a long first message at a word and marks the cut", () => {
+    expect(
+      chatTitle(
+        "What are the best free sacrifice outlets for Meren of Clan Nel Toth in a budget list?",
+      ),
+    ).toBe("What are the best free sacrifice outlets for Meren of Clan…");
+  });
+
+  it("cuts a single long word at the limit", () => {
+    expect(chatTitle("a".repeat(80))).toBe(`${"a".repeat(59)}…`);
   });
 });

@@ -21,6 +21,17 @@ export function groupChats(
     .map((label) => ({ label, chats: groups[label] }));
 }
 
+const CHAT_TITLE_MAX = 60;
+
+/** A chat's title from its first message: one line, cut at a word boundary when long. */
+export function chatTitle(firstMessage: string): string {
+  const text = firstMessage.replace(/\s+/g, " ").trim();
+  if (text.length <= CHAT_TITLE_MAX) return text;
+  const cut = text.slice(0, CHAT_TITLE_MAX - 1);
+  const space = cut.lastIndexOf(" ");
+  return `${(space > CHAT_TITLE_MAX / 2 ? cut.slice(0, space) : cut).trimEnd()}…`;
+}
+
 /** "14:20" in the reader's locale, for "Try again at …" messages. */
 export function clockTime(date: Date, locale?: string): string {
   return new Intl.DateTimeFormat(locale, { hour: "numeric", minute: "2-digit" }).format(date);
