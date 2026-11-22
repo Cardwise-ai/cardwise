@@ -9,7 +9,13 @@ import {
   useMemo,
   useState,
 } from "react";
-import { readThemeMode, resolveTheme, THEME_STORAGE_KEY, type ThemeMode } from "@/lib/theme";
+import {
+  applyTheme as applyThemeTo,
+  readThemeMode,
+  THEME_COLORS,
+  THEME_STORAGE_KEY,
+  type ThemeMode,
+} from "@/lib/theme";
 
 interface ThemeContextValue {
   mode: ThemeMode;
@@ -27,9 +33,7 @@ function savedMode(): ThemeMode {
 }
 
 function applyTheme(mode: ThemeMode, systemDark: boolean) {
-  const root = document.documentElement;
-  root.dataset.themeMode = mode;
-  root.dataset.theme = resolveTheme(mode, systemDark);
+  applyThemeTo(mode, systemDark, THEME_COLORS);
 }
 
 export function ThemeProvider({ children }: { children: ReactNode }) {

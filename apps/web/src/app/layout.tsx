@@ -1,10 +1,9 @@
 import type { Metadata, Viewport } from "next";
 import { headers } from "next/headers";
 import { connection } from "next/server";
-import Script from "next/script";
 import { ThemeProvider } from "@/components/app/theme-provider";
 import { publicSans, sourceSerif } from "./fonts";
-import { THEME_BOOTSTRAP } from "@/lib/theme";
+import { THEME_BOOTSTRAP, THEME_COLORS } from "@/lib/theme";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -14,10 +13,12 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
+  // The bootstrap script rewrites both theme-color tags to the chosen theme.
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#e6ede5" },
-    { media: "(prefers-color-scheme: dark)", color: "#15241f" },
+    { media: "(prefers-color-scheme: light)", color: THEME_COLORS.light },
+    { media: "(prefers-color-scheme: dark)", color: THEME_COLORS.dark },
   ],
+  colorScheme: "light dark",
 };
 
 // Every page renders per request so Next.js can stamp the CSP nonce from the proxy on its
@@ -33,10 +34,17 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
       suppressHydrationWarning
       className={`${publicSans.variable} ${sourceSerif.variable}`}
     >
+      <head>
+        {/* A plain inline script blocks first paint; next/script would wait for the runtime. */}
+        <script
+          id="theme-bootstrap"
+          nonce={nonce}
+          suppressHydrationWarning
+          // eslint-disable-next-line react/no-danger, no-restricted-syntax -- a constant, not user content
+          dangerouslySetInnerHTML={{ __html: THEME_BOOTSTRAP }}
+        />
+      </head>
       <body>
-        <Script id="theme-bootstrap" nonce={nonce} strategy="beforeInteractive">
-          {THEME_BOOTSTRAP}
-        </Script>
         <ThemeProvider>{children}</ThemeProvider>
       </body>
     </html>
