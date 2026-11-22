@@ -1,24 +1,34 @@
 @import "tailwindcss";
 
 /*
- * Design tokens (engineering spec §8.2). The UI stays quiet so card art and oracle text carry
- * the color. Dark mode is out of scope; names describe roles so a dark set can be added.
+ * The desk borrows its colors from a playmat, card stock, and old brass hardware. Mana colors
+ * remain reserved for actual mana symbols and color-identity pips.
  */
 @theme {
   --color-*: initial;
   --color-white: #ffffff;
   --color-transparent: transparent;
-  --color-surface: #f3f4f1;
-  --color-panel: #ffffff;
-  --color-ink: #22262b;
-  --color-muted: #5d646c;
-  --color-rule: #d6d9d4;
-  --color-rule-strong: #b8beb6;
-  --color-accent: #2f5d50;
-  --color-accent-strong: #244a40;
-  --color-accent-wash: #e7eeea;
-  --color-hover: #e9ebe6;
-  --color-placeholder: #e3e6e1;
+  --color-surface: #e6ede5;
+  --color-panel: #fbfaf4;
+  --color-ink: #1b2a25;
+  --color-muted: #4e625a;
+  --color-rule: #c7d3c9;
+  --color-rule-strong: #9cab9f;
+  --color-accent: #1d4b40;
+  --color-accent-strong: #14382f;
+  --color-accent-wash: #d9e7dd;
+  --color-hover: #dde7dd;
+  --color-placeholder: #e1e9e1;
+  --color-brass: #b18a3c;
+  --color-river: #36798a;
+  --color-action-ink: #ffffff;
+  --color-danger-ink: #ffffff;
+  --color-overlay: #10211c;
+  --color-rail: #1d4b40;
+  --color-rail-ink: #fbfaf4;
+  --color-rail-muted: #c8d8ca;
+  --color-rail-rule: #507266;
+  --color-rail-hover: #2a5a4d;
   --color-danger: #9c2f2a;
   --color-danger-strong: #7f2622;
   --color-danger-wash: #f8ecea;
@@ -91,6 +101,71 @@
   --font-serif: var(--font-source-serif), Georgia, "Times New Roman", serif;
 }
 
+:root {
+  color-scheme: light;
+}
+
+/* Night table: deep forest, lifted green-black card stock, and softened brass. */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --color-surface: #15241f;
+  --color-panel: #20322b;
+  --color-ink: #e7ede6;
+  --color-muted: #b5c4b8;
+  --color-rule: #3d5147;
+  --color-rule-strong: #63776b;
+  --color-accent: #91c9a6;
+  --color-accent-strong: #a5d7b5;
+  --color-accent-wash: #294539;
+  --color-hover: #2a3b33;
+  --color-placeholder: #25372f;
+  --color-brass: #c6aa73;
+  --color-river: #8fc5d5;
+  --color-action-ink: #14231d;
+  --color-danger-ink: #2d1716;
+  --color-overlay: #071410;
+  --color-rail: #10221d;
+  --color-rail-ink: #f3f4e9;
+  --color-rail-muted: #bdccc0;
+  --color-rail-rule: #34493f;
+  --color-rail-hover: #1c3229;
+  --color-danger: #f29a8f;
+  --color-danger-strong: #ffc1b8;
+  --color-danger-wash: #4a2c2a;
+  --shadow-float: 0 1px 2px rgb(0 0 0 / 0.24), 0 8px 24px rgb(0 0 0 / 0.42);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    color-scheme: dark;
+    --color-surface: #15241f;
+    --color-panel: #20322b;
+    --color-ink: #e7ede6;
+    --color-muted: #b5c4b8;
+    --color-rule: #3d5147;
+    --color-rule-strong: #63776b;
+    --color-accent: #91c9a6;
+    --color-accent-strong: #a5d7b5;
+    --color-accent-wash: #294539;
+    --color-hover: #2a3b33;
+    --color-placeholder: #25372f;
+    --color-brass: #c6aa73;
+    --color-river: #8fc5d5;
+    --color-action-ink: #14231d;
+    --color-danger-ink: #2d1716;
+    --color-overlay: #071410;
+    --color-rail: #10221d;
+    --color-rail-ink: #f3f4e9;
+    --color-rail-muted: #bdccc0;
+    --color-rail-rule: #34493f;
+    --color-rail-hover: #1c3229;
+    --color-danger: #f29a8f;
+    --color-danger-strong: #ffc1b8;
+    --color-danger-wash: #4a2c2a;
+    --shadow-float: 0 1px 2px rgb(0 0 0 / 0.24), 0 8px 24px rgb(0 0 0 / 0.42);
+  }
+}
+
 @layer base {
   html {
     -webkit-text-size-adjust: 100%;
@@ -113,6 +188,7 @@
 
   ::selection {
     background: var(--color-accent-wash);
+    color: var(--color-ink);
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -128,6 +204,10 @@
 
 /* Answer text rendered by components/markdown.tsx. */
 @layer components {
+  .dark-field :focus-visible {
+    outline-color: var(--color-rail-ink);
+  }
+
   .prose-answer {
     overflow-wrap: anywhere;
   }

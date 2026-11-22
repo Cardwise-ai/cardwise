@@ -3,7 +3,7 @@
 import { useActionState, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Field, Input } from "@/components/ui/input";
-import { sendMagicLink, type SignInState, signInWithPassword } from "./actions";
+import { sendMagicLink, type SignInState, signInWithGoogle, signInWithPassword } from "./actions";
 
 const idle: SignInState = { status: "idle" };
 
@@ -18,9 +18,17 @@ export function SignInForm({
 }) {
   const [passwordState, passwordAction, passwordPending] = useActionState(signInWithPassword, idle);
   const [linkState, linkAction, linkPending] = useActionState(sendMagicLink, idle);
-  const [last, setLast] = useState<"password" | "link" | null>(null);
-  const state = last === "link" ? linkState : last === "password" ? passwordState : idle;
-  const pending = passwordPending || linkPending;
+  const [googleState, googleAction, googlePending] = useActionState(signInWithGoogle, idle);
+  const [last, setLast] = useState<"password" | "link" | "google" | null>(null);
+  const state =
+    last === "link"
+      ? linkState
+      : last === "password"
+        ? passwordState
+        : last === "google"
+          ? googleState
+          : idle;
+  const pending = passwordPending || linkPending || googlePending;
 
   if (state.status === "sent") {
     return (
@@ -49,6 +57,21 @@ export function SignInForm({
           {error}
         </p>
       ) : null}
+      <Button
+        type="submit"
+        formAction={googleAction}
+        variant="primary"
+        disabled={pending}
+        onClick={() => setLast("google")}
+        className="w-full"
+      >
+        {googlePending ? "Connecting…" : "Continue with Google"}
+      </Button>
+      <div className="flex items-center gap-3 text-sm text-muted" aria-hidden>
+        <span className="h-px flex-1 bg-rule" />
+        or use email
+        <span className="h-px flex-1 bg-rule" />
+      </div>
       <Field id="email" label="Email">
         <Input
           id="email"
@@ -57,7 +80,7 @@ export function SignInForm({
           autoComplete="email"
           defaultValue={state.email ?? ""}
           required
-          aria-invalid={state.status === "error" ? true : undefined}
+          aria-invalid={state.status === "error" && last !== "google" ? true : undefined}
         />
       </Field>
       <Field
@@ -69,23 +92,18 @@ export function SignInForm({
       </Field>
       <Button
         type="submit"
-        variant="primary"
         disabled={pending}
         onClick={() => setLast("password")}
-        className="mt-1"
+        className="mt-1 w-full"
       >
         {passwordPending ? "Signing in…" : "Sign in"}
       </Button>
-      <div className="flex items-center gap-3 text-sm text-muted" aria-hidden>
-        <span className="h-px flex-1 bg-rule" />
-        or
-        <span className="h-px flex-1 bg-rule" />
-      </div>
       <Button
         type="submit"
         formAction={linkAction}
         disabled={pending}
         onClick={() => setLast("link")}
+        className="w-full"
       >
         {linkPending ? "Sending…" : "Email me a sign-in link"}
       </Button>

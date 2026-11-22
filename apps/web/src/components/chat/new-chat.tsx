@@ -31,6 +31,8 @@ export function NewChat() {
     try {
       const chat = await create();
       setPendingMessage(chat.id, text);
+      setDraft("");
+      setBusy(false);
       router.push(`/chats/${chat.id}`);
     } catch (e) {
       setError(describeError(e));
@@ -43,30 +45,33 @@ export function NewChat() {
     <>
       <ChatHeader title={<span className="font-normal text-muted">New chat</span>} />
       <div className="min-h-0 flex-1 overflow-y-auto">
-        <div className="mx-auto flex w-full max-w-[72ch] flex-col px-4 pt-[min(14vh,120px)] pb-10 md:px-6">
-          <h2 className="text-xl font-semibold">Ask about cards for your deck</h2>
-          <p className="mt-2 max-w-[56ch] text-muted">
-            Tell Cardwise your commander and what the deck is missing. Every card it suggests links
-            to its oracle text, so you can check the wording before you add it.
+        <div className="mx-auto flex w-full max-w-[74ch] flex-col px-5 pt-[clamp(56px,13vh,124px)] pb-12 md:px-8">
+          <h2 className="max-w-[18ch] text-balance font-serif text-[clamp(2rem,4vw,3rem)] leading-[1.05] font-semibold tracking-[-0.035em]">
+            What is your deck trying to do?
+          </h2>
+          <p className="mt-4 max-w-[56ch] text-muted">
+            Name your commander, your colors, or the moment the deck falls apart. Cardwise will find
+            candidates and keep their oracle text close at hand.
           </p>
-          <h3 className="mt-8 text-sm text-muted">Try one of these</h3>
-          <ul className="mt-2 divide-y divide-rule border-y border-rule">
+          <h3 className="mt-10 font-serif text-lg font-semibold">Start with a question</h3>
+          <ul className="mt-3 max-w-[64ch] divide-y divide-rule border-y border-rule">
             {examples.map((example) => (
               <li key={example}>
                 <button
                   type="button"
                   disabled={busy}
                   onClick={() => void start(example)}
-                  className="block w-full px-1 py-2.5 text-left hover:bg-hover hover:text-ink focus-visible:outline-offset-[-2px] disabled:text-muted"
+                  className="flex w-full items-start gap-3 px-2 py-3.5 text-left font-serif text-base leading-6 hover:bg-hover focus-visible:outline-offset-[-2px] disabled:text-muted sm:text-lg"
                 >
-                  {example}
+                  <span aria-hidden className="mt-[9px] size-2 shrink-0 rounded-full bg-brass" />
+                  <span>{example}</span>
                 </button>
               </li>
             ))}
           </ul>
         </div>
       </div>
-      <div className="shrink-0 px-4 pb-4 md:px-6">
+      <div className="shrink-0 border-t border-rule bg-surface px-4 pt-3 pb-4 md:px-6">
         <div className="mx-auto w-full max-w-[72ch]">
           {error ? (
             <ErrorBanner className="mb-2">

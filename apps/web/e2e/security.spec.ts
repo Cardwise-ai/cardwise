@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { EXPIRED_SESSION_CHAT_ID } from "../src/mocks/db";
+import { EXPIRED_SESSION_CHAT_ID, SEEDED_CHAT_ID } from "../src/mocks/db";
 import { signIn } from "./helpers";
 
 test.describe("security headers", () => {
@@ -76,6 +76,21 @@ test.describe("sign-in", () => {
     await expect(
       page.getByRole("heading", { name: "Sacrifice outlets for Meren", level: 1 }),
     ).toBeVisible();
+  });
+
+  test("Google sign-in returns to the requested chat in mock mode", async ({ page }) => {
+    await page.goto(`/sign-in?next=%2Fchats%2F${SEEDED_CHAT_ID}`);
+    await page.getByRole("button", { name: "Continue with Google" }).click();
+    await expect(page).toHaveURL(new RegExp(`/chats/${SEEDED_CHAT_ID}$`));
+    await expect(page.getByRole("heading", { name: "Sacrifice outlets for Meren" })).toBeVisible();
+  });
+
+  test("email-link sign-in still returns to the requested chat in mock mode", async ({ page }) => {
+    await page.goto(`/sign-in?next=%2Fchats%2F${SEEDED_CHAT_ID}`);
+    await page.getByLabel("Email").fill("reader@example.com");
+    await page.getByRole("button", { name: "Email me a sign-in link" }).click();
+    await expect(page).toHaveURL(new RegExp(`/chats/${SEEDED_CHAT_ID}$`));
+    await expect(page.getByRole("heading", { name: "Sacrifice outlets for Meren" })).toBeVisible();
   });
 
   test("an off-site next parameter is ignored", async ({ page }) => {

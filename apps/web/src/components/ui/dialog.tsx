@@ -10,7 +10,7 @@ export const DialogTrigger = DialogPrimitive.Trigger;
 export const DialogClose = DialogPrimitive.Close;
 
 function Overlay() {
-  return <DialogPrimitive.Overlay className="fixed inset-0 z-40 bg-ink/30 animate-fade-in" />;
+  return <DialogPrimitive.Overlay className="fixed inset-0 z-40 bg-overlay/55 animate-fade-in" />;
 }
 
 export interface DialogContentProps extends ComponentPropsWithRef<typeof DialogPrimitive.Content> {

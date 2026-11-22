@@ -3,12 +3,13 @@ import { safeNextPath } from "@/lib/auth/shared";
 import { isMocking } from "@/lib/env";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
-/** Magic-link landing: exchanges the PKCE code for a session cookie, then continues to `next`. */
+/** OAuth and magic-link landing: exchanges the PKCE code, then continues to the safe `next` path. */
 export async function GET(request: NextRequest) {
   const { searchParams } = request.nextUrl;
   const next = safeNextPath(searchParams.get("next"));
   const code = searchParams.get("code");
-  const failed = new URL("/sign-in?error=link", request.url);
+  const failureCode = searchParams.get("flow") === "google" ? "google" : "link";
+  const failed = new URL(`/sign-in?error=${failureCode}`, request.url);
 
   if (isMocking || !code) return NextResponse.redirect(failed);
 

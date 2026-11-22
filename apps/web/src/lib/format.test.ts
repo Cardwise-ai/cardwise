@@ -3,7 +3,7 @@ import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { describeSymbol, parseSymbols } from "@/components/cards/mana";
 import type { Chat } from "@/lib/api/client";
-import { contrastRatio, palette } from "./contrast";
+import { contrastRatio, darkPalette, palette } from "./contrast";
 import { groupChats, rateLimitMessage } from "./format";
 
 describe("design tokens", () => {
@@ -12,6 +12,13 @@ describe("design tokens", () => {
   it("match the palette in globals.css", () => {
     for (const [name, hex] of Object.entries(palette)) {
       expect(css.toLowerCase()).toContain(`--color-${name}: ${hex}`);
+    }
+  });
+
+  it("match the night-table palette in globals.css", () => {
+    const darkTokens = /:root\[data-theme="dark"\]\s*{([\s\S]*?)\n}/.exec(css)?.[1] ?? "";
+    for (const [name, hex] of Object.entries(darkPalette)) {
+      expect(darkTokens.toLowerCase()).toContain(`--color-${name}: ${hex}`);
     }
   });
 
@@ -25,9 +32,32 @@ describe("design tokens", () => {
     ["accent", "surface"],
     ["accent", "accent-wash"],
     ["panel", "accent"],
+    ["rail-ink", "rail"],
+    ["rail-muted", "rail"],
+    ["action-ink", "accent"],
+    ["action-ink", "accent-strong"],
+    ["danger-ink", "danger"],
     ["danger", "danger-wash"],
   ] as const)("%s on %s meets 4.5:1", (text, background) => {
     expect(contrastRatio(palette[text], palette[background])).toBeGreaterThanOrEqual(4.5);
+  });
+
+  it.each([
+    ["ink", "surface"],
+    ["ink", "panel"],
+    ["muted", "surface"],
+    ["muted", "panel"],
+    ["accent", "surface"],
+    ["accent", "panel"],
+    ["accent", "accent-wash"],
+    ["rail-ink", "rail"],
+    ["rail-muted", "rail"],
+    ["action-ink", "accent"],
+    ["action-ink", "accent-strong"],
+    ["danger", "danger-wash"],
+    ["danger-ink", "danger"],
+  ] as const)("dark %s on %s meets 4.5:1", (text, background) => {
+    expect(contrastRatio(darkPalette[text], darkPalette[background])).toBeGreaterThanOrEqual(4.5);
   });
 });
 

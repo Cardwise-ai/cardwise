@@ -53,8 +53,8 @@ export function AppShell({ email, children }: { email: string; children: ReactNo
         <ChatsProvider>
           <CardPanelProvider>
             <ShellProvider value={shell}>
-              <div className="flex h-dvh overflow-hidden">
-                <aside className="hidden w-64 shrink-0 border-r border-rule md:block">
+              <div className="flex h-dvh overflow-hidden bg-surface">
+                <aside className="hidden w-[276px] shrink-0 md:block">
                   <Sidebar email={email} />
                 </aside>
                 <Dialog open={navOpen} onOpenChange={setNavOpen}>
@@ -62,7 +62,7 @@ export function AppShell({ email, children }: { email: string; children: ReactNo
                     <Sidebar email={email} />
                   </SheetContent>
                 </Dialog>
-                <main className="flex min-w-0 flex-1 flex-col bg-panel">{children}</main>
+                <main className="flex min-w-0 flex-1 flex-col bg-surface">{children}</main>
                 <CardPanelSlot />
               </div>
             </ShellProvider>
