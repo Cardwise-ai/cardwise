@@ -26,8 +26,8 @@ from cardwise_api.agent.port import AgentEvent, AgentRequest, AgentUsage
 from cardwise_api.agent.prompt import (
     FINAL_TURN_NOTE,
     NO_ANSWER_TEXT,
-    SYSTEM_PROMPT,
     TOOL_LIMIT_RESULT,
+    build_system_prompt,
 )
 from cardwise_api.agent.tools import TOOL_SPECS, is_tool_name, run_tool
 from cardwise_api.models import MessageOut, Model
@@ -118,7 +118,7 @@ class ChatAgent:
         tally = _Tally(model=self._model.name)
         budget = _Budget(tools_on=limits.max_tool_rounds > 0 and limits.max_tool_calls > 0)
         messages = [
-            Message.system(SYSTEM_PROMPT),
+            Message.system(build_system_prompt()),
             *_history(request.history),
             Message.user(request.question),
         ]
