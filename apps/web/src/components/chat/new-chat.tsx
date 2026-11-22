@@ -46,25 +46,24 @@ export function NewChat() {
       <ChatHeader title={<span className="font-normal text-muted">New chat</span>} />
       <div className="min-h-0 flex-1 overflow-y-auto">
         <div className="mx-auto flex w-full max-w-[74ch] flex-col px-5 pt-[clamp(56px,13vh,124px)] pb-12 md:px-8">
-          <h2 className="max-w-[18ch] text-balance font-serif text-[clamp(2rem,4vw,3rem)] leading-[1.05] font-semibold tracking-[-0.035em]">
+          <h2 className="max-w-[16ch] text-balance text-[clamp(2.25rem,4.5vw,3.5rem)] leading-[1] font-bold tracking-display">
             What is your deck trying to do?
           </h2>
           <p className="mt-4 max-w-[56ch] text-muted">
             Name your commander, your colors, or the moment the deck falls apart. Cardwise will find
             candidates and keep their oracle text close at hand.
           </p>
-          <h3 className="mt-10 font-serif text-lg font-semibold">Start with a question</h3>
-          <ul className="mt-3 max-w-[64ch] divide-y divide-rule border-y border-rule">
+          <h3 className="mt-10 font-semibold">Start with a question</h3>
+          <ul className="mt-3 flex max-w-[64ch] flex-col items-start gap-2">
             {examples.map((example) => (
               <li key={example}>
                 <button
                   type="button"
                   disabled={busy}
                   onClick={() => void start(example)}
-                  className="flex w-full items-start gap-3 px-2 py-3.5 text-left font-serif text-base leading-6 hover:bg-hover focus-visible:outline-offset-[-2px] disabled:text-muted sm:text-lg"
+                  className="rounded-field rounded-br-control border border-rule bg-panel px-4 py-2.5 text-left transition-colors hover:border-accent hover:bg-accent-wash disabled:text-muted"
                 >
-                  <span aria-hidden className="mt-[9px] size-2 shrink-0 rounded-full bg-brass" />
-                  <span>{example}</span>
+                  {example}
                 </button>
               </li>
             ))}

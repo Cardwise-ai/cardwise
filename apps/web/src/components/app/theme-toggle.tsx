@@ -35,7 +35,7 @@ export function ThemeToggle({
       title={`Change theme from ${labels[mode]} to ${labels[next]}`}
       onClick={() => setMode(next)}
       className={cx(
-        "inline-flex min-h-9 items-center gap-2 rounded-control border px-3 text-sm font-semibold transition-colors focus-visible:outline-offset-2",
+        "inline-flex min-h-9 items-center gap-2 rounded-pill border px-3.5 text-sm font-semibold transition-colors focus-visible:outline-offset-2",
         variant === "rail"
           ? "border-rail-rule text-rail-ink hover:bg-rail-hover"
           : "border-rule bg-panel text-ink hover:bg-hover",

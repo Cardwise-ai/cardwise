@@ -60,7 +60,7 @@ export function Composer({
   const count = value.length;
   return (
     <form onSubmit={submit} className="w-full">
-      <div className="rounded-control border border-rule border-l-[3px] border-l-accent bg-panel transition-colors focus-within:border-accent hover:border-rule-strong focus-within:hover:border-accent has-[textarea:focus-visible]:outline-2 has-[textarea:focus-visible]:outline-offset-2 has-[textarea:focus-visible]:outline-accent">
+      <div className="rounded-field border border-rule bg-panel transition-colors focus-within:border-accent hover:border-rule-strong focus-within:hover:border-accent has-[textarea:focus-visible]:outline-2 has-[textarea:focus-visible]:outline-offset-2 has-[textarea:focus-visible]:outline-accent">
         <label htmlFor={id} className="sr-only">
           Message
         </label>

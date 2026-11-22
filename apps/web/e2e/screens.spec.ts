@@ -13,6 +13,7 @@ async function shot(page: Page, name: string, project: string) {
 }
 
 test("capture screens", async ({ page }, info) => {
+  test.setTimeout(120_000);
   const project = info.project.name;
   const mobile = project === "mobile";
 

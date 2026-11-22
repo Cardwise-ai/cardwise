@@ -54,7 +54,7 @@ export function AppShell({ email, children }: { email: string; children: ReactNo
           <CardPanelProvider>
             <ShellProvider value={shell}>
               <div className="flex h-dvh overflow-hidden bg-surface">
-                <aside className="hidden w-[276px] shrink-0 md:block">
+                <aside className="hidden w-[276px] shrink-0 border-r border-rail-rule md:block">
                   <Sidebar email={email} />
                 </aside>
                 <Dialog open={navOpen} onOpenChange={setNavOpen}>

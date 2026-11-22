@@ -31,7 +31,7 @@ export function DialogContent({
       <Overlay />
       <DialogPrimitive.Content
         className={cx(
-          "fixed top-1/2 left-1/2 z-50 w-[calc(100%-32px)] max-w-[420px] -translate-x-1/2 -translate-y-1/2 rounded-popover border border-rule bg-panel p-6 shadow-float animate-fade-in focus:outline-none",
+          "fixed top-1/2 left-1/2 z-50 w-[calc(100%-32px)] max-w-[420px] -translate-x-1/2 -translate-y-1/2 rounded-sheet border border-rule bg-panel p-6 shadow-float animate-fade-in focus:outline-none",
           className,
         )}
         {...(description ? {} : { "aria-describedby": undefined })}

@@ -29,7 +29,7 @@ export default async function SignInPage({ searchParams }: PageProps<"/sign-in">
         <div className="my-auto max-w-[520px] py-10 lg:py-0">
           <h1
             id="welcome-title"
-            className="max-w-[13ch] text-balance font-serif text-[clamp(2.6rem,6vw,5rem)] leading-[0.98] font-semibold tracking-[-0.04em]"
+            className="max-w-[12ch] text-balance text-[clamp(2.75rem,6.5vw,5.5rem)] leading-[0.94] font-bold tracking-display"
           >
             Find the card that makes the deck click.
           </h1>
@@ -37,9 +37,10 @@ export default async function SignInPage({ searchParams }: PageProps<"/sign-in">
             Ask about your commander, your strategy, or the slot that keeps coming up short. Compare
             suggestions against the cards&apos; oracle text.
           </p>
-          <blockquote className="mt-9 max-w-[38ch] border-l-2 border-brass pl-5 font-serif text-lg leading-7 text-white/90">
+          <p className="mt-9 w-fit max-w-[34ch] rounded-field rounded-br-control bg-signal px-5 py-3.5 text-lg leading-7 font-semibold text-rail">
+            <span className="sr-only">For example: </span>
             What are the best free sacrifice outlets for Meren?
-          </blockquote>
+          </p>
         </div>
         <footer className="max-w-[540px] text-sm leading-5 text-white/65">
           <p>
@@ -63,7 +64,7 @@ export default async function SignInPage({ searchParams }: PageProps<"/sign-in">
           <div className="mb-8 flex justify-end">
             <ThemeToggle />
           </div>
-          <h2 className="font-serif text-3xl font-semibold tracking-[-0.025em]">Sign in</h2>
+          <h2 className="text-2xl font-bold tracking-tight">Sign in</h2>
           <p className="mt-2 text-muted">
             Your Commander questions and saved conversations, together.
           </p>

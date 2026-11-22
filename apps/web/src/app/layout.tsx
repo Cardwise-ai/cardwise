@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { headers } from "next/headers";
 import { connection } from "next/server";
 import { ThemeProvider } from "@/components/app/theme-provider";
-import { publicSans, sourceSerif } from "./fonts";
+import { schibstedGrotesk, sourceSerif } from "./fonts";
 import { THEME_BOOTSTRAP, THEME_COLORS } from "@/lib/theme";
 import "./globals.css";
 
@@ -32,7 +32,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
     <html
       lang="en"
       suppressHydrationWarning
-      className={`${publicSans.variable} ${sourceSerif.variable}`}
+      className={`${schibstedGrotesk.variable} ${sourceSerif.variable}`}
     >
       <head>
         {/* A plain inline script blocks first paint; next/script would wait for the runtime. */}

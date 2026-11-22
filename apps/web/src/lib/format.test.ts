@@ -15,7 +15,7 @@ describe("design tokens", () => {
     }
   });
 
-  it("match the night-table palette in globals.css", () => {
+  it("match the dark palette in globals.css", () => {
     const darkTokens = /:root\[data-theme="dark"\]\s*{([\s\S]*?)\n}/.exec(css)?.[1] ?? "";
     for (const [name, hex] of Object.entries(darkPalette)) {
       expect(darkTokens.toLowerCase()).toContain(`--color-${name}: ${hex}`);
@@ -38,6 +38,7 @@ describe("design tokens", () => {
     ["action-ink", "accent-strong"],
     ["danger-ink", "danger"],
     ["danger", "danger-wash"],
+    ["signal", "rail"],
   ] as const)("%s on %s meets 4.5:1", (text, background) => {
     expect(contrastRatio(palette[text], palette[background])).toBeGreaterThanOrEqual(4.5);
   });
@@ -56,10 +57,39 @@ describe("design tokens", () => {
     ["action-ink", "accent-strong"],
     ["danger", "danger-wash"],
     ["danger-ink", "danger"],
+    ["signal", "rail"],
   ] as const)("dark %s on %s meets 4.5:1", (text, background) => {
     expect(contrastRatio(darkPalette[text], darkPalette[background])).toBeGreaterThanOrEqual(4.5);
   });
+
+  it.each([palette, darkPalette])("field borders meet 3:1 against panels", (theme) => {
+    expect(contrastRatio(theme["rule-strong"], theme.panel)).toBeGreaterThanOrEqual(3);
+  });
+
+  it.each([palette, darkPalette])("the accent is purple", (theme) => {
+    expect(hue(theme.accent)).toBeGreaterThanOrEqual(250);
+    expect(hue(theme.accent)).toBeLessThanOrEqual(290);
+  });
+
+  it("dark mode sits on true black", () => {
+    expect(darkPalette.surface).toBe("#000000");
+    expect(darkPalette.rail).toBe("#000000");
+  });
 });
+
+function hue(hex: string): number {
+  const [r, g, b] = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255) as [
+    number,
+    number,
+    number,
+  ];
+  const max = Math.max(r, g, b);
+  const delta = max - Math.min(r, g, b);
+  if (delta === 0) return 0;
+  const h =
+    max === r ? ((g - b) / delta) % 6 : max === g ? (b - r) / delta + 2 : (r - g) / delta + 4;
+  return (h * 60 + 360) % 360;
+}
 
 describe("mana symbols", () => {
   it("parses a cost into symbols", () => {

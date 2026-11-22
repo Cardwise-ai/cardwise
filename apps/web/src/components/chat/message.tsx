@@ -43,7 +43,7 @@ function Notice({
 }) {
   if (message.status === "interrupted") {
     return (
-      <p className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 border-l-2 border-rule pl-3 text-sm text-muted">
+      <p className="mt-3 flex w-fit flex-wrap items-center gap-x-3 gap-y-1 rounded-field border border-rule py-1 pr-1 pl-3.5 text-sm text-muted">
         <span>Stopped. The answer above is incomplete.</span>
         <Button
           variant="ghost"
@@ -66,7 +66,7 @@ function Notice({
     return (
       <div
         role="alert"
-        className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 border-l-2 border-danger pl-3 text-sm"
+        className="mt-3 flex w-fit flex-wrap items-center gap-x-3 gap-y-1 rounded-field border border-danger/30 bg-danger-wash py-1 pr-1 pl-3.5 text-sm"
       >
         <span>{text}</span>
         <Button
@@ -102,9 +102,9 @@ export const MessageItem = memo(function MessageItem({
 }: MessageItemProps) {
   if (message.role === "user") {
     return (
-      <article aria-label="You said" className="flex flex-col items-start">
+      <article aria-label="You said" className="flex flex-col items-end">
         <h3 className="sr-only">You</h3>
-        <div className="max-w-full border-l-2 border-accent bg-accent-wash px-4 py-3 whitespace-pre-wrap [overflow-wrap:anywhere]">
+        <div className="max-w-[min(100%,52ch)] rounded-field rounded-br-control bg-accent-wash px-4 py-3 whitespace-pre-wrap [overflow-wrap:anywhere]">
           {message.content}
         </div>
       </article>
@@ -114,7 +114,7 @@ export const MessageItem = memo(function MessageItem({
   const streaming = message.status === "streaming";
   return (
     <article aria-label="Cardwise answered" aria-busy={streaming || undefined}>
-      <h3 className="mb-2 font-serif text-lg font-semibold text-accent">Cardwise</h3>
+      <h3 className="mb-1.5 font-bold tracking-tight text-accent">Cardwise</h3>
       {message.content ? (
         <Markdown
           text={message.content}
