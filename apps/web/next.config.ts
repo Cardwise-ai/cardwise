@@ -11,6 +11,12 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   cacheComponents: true,
   partialPrefetching: true,
+  experimental: {
+    // The persistent build cache (restored by Vercel between builds) kept serving CSS from an
+    // older globals.css: it does not invalidate the Tailwind loader output. Builds are small, so
+    // every build starts cold. scripts/check-built-css.mjs guards against a regression.
+    turbopackFileSystemCacheForBuild: false,
+  },
   images: {
     // Card images load straight from Scryfall's CDN; no optimizer in between.
     unoptimized: true,
